@@ -1,0 +1,121 @@
+<div class="container-fluid py-2">
+
+  <!-- Header with view toggle -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="fw-bold mb-0">
+        <i class="bi bi-check2-square me-2 text-primary"></i>Tasks
+        <span class="badge bg-primary ms-2">{{ tasks().length }}</span>
+      </h2>
+      <small class="text-muted">{{ filtered().length }} shown</small>
+    </div>
+    <div class="d-flex gap-2">
+      <!-- View switcher: list ↔ board -->
+      <div class="btn-group btn-group-sm">
+        <a routerLink="/tasks"       routerLinkActive="active btn-primary"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="btn btn-outline-secondary">
+          <i class="bi bi-list-task me-1"></i>List
+        </a>
+        <a routerLink="/tasks/board" routerLinkActive="active btn-primary"
+          class="btn btn-outline-secondary">
+          <i class="bi bi-trello me-1"></i>Board
+        </a>
+      </div>
+      <button class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-lg me-1"></i> New Task
+      </button>
+    </div>
+  </div>
+
+  <!-- Status filter chips -->
+  <div class="d-flex flex-wrap gap-2 mb-4">
+    @for (s of statuses; track s) {
+      <button
+        class="btn btn-sm rounded-pill"
+        [class.btn-primary]="activeStatus() === s"
+        [class.btn-outline-secondary]="activeStatus() !== s"
+        (click)="setStatus(s)">
+        @if (s !== 'All') {
+          <i [class]="'bi ' + statusConfig[s].icon + ' me-1'"></i>
+        }
+        {{ s === 'All' ? 'All Tasks' : statusConfig[s].label }}
+      </button>
+    }
+  </div>
+
+  @if (loading()) {
+    <app-loader />
+  } @else if (error()) {
+    <div class="alert alert-danger">{{ error() }}</div>
+  } @else {
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark">
+              <tr>
+                <th class="ps-4">Task</th>
+                <th>Project</th>
+                <th>Assignee</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Due Date</th>
+                <th class="text-end pe-4">Hours</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (task of filtered(); track task.id) {
+                <tr>
+                  <td class="ps-4">
+                    <div class="fw-semibold">{{ task.title }}</div>
+                    <small class="text-muted">{{ task.description }}</small>
+                  </td>
+                  <td>
+                    <span class="badge bg-light text-dark border small">{{ task.projectName }}</span>
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <div
+                        class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center flex-shrink-0"
+                        style="width:28px;height:28px;font-size:0.7rem;font-weight:700;">
+                        {{ task.assigneeInitial }}
+                      </div>
+                      <span class="small">{{ task.assigneeName }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge bg-transparent small" [class]="priorityConfig[task.priority].badge">
+                      {{ task.priority }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge rounded-pill" [class]="statusConfig[task.status].badge">
+                      <i [class]="'bi ' + statusConfig[task.status].icon + ' me-1'"></i>
+                      {{ statusConfig[task.status].label }}
+                    </span>
+                  </td>
+                  <td class="text-muted small">{{ task.dueDate | dateFormat:'medium' }}</td>
+                  <td class="text-end pe-4">
+                    <span class="small">
+                      <span class="text-success fw-semibold">{{ task.loggedHours }}h</span>
+                      <span class="text-muted"> / {{ task.estimatedHours }}h</span>
+                    </span>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox display-6 d-block mb-2"></i>
+                    No tasks found.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

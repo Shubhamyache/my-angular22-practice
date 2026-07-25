@@ -1,0 +1,125 @@
+<div class="container-fluid py-2">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="fw-bold mb-0">
+        <i class="bi bi-kanban-fill me-2 text-primary"></i>Projects
+        <span class="badge bg-primary ms-2">{{ projects().length }}</span>
+      </h2>
+      <small class="text-muted">
+        {{ filtered().length }} shown &bull;
+        {{ projects().filter(p => p.status === 'Active').length }} active
+      </small>
+    </div>
+    <button class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i> New Project
+    </button>
+  </div>
+
+  <!-- Status filter chips -->
+  <div class="d-flex flex-wrap gap-2 mb-4">
+    @for (f of statusFilters; track f) {
+      <button
+        class="btn btn-sm rounded-pill"
+        [class.btn-primary]="activeFilter() === f"
+        [class.btn-outline-secondary]="activeFilter() !== f"
+        (click)="setFilter(f)">
+        {{ f === 'All' ? 'All Projects' : f }}
+      </button>
+    }
+  </div>
+
+  @if (loading()) {
+    <app-loader />
+  } @else if (error()) {
+    <div class="alert alert-danger">{{ error() }}</div>
+  } @else {
+    <div class="row g-4">
+      @for (project of filtered(); track project.id) {
+        <div class="col-12 col-md-6 col-xl-4">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+
+              <!-- Top row: priority dot + title + status badge -->
+              <div class="d-flex align-items-start gap-2 mb-3">
+                <span
+                  class="rounded-circle flex-shrink-0 mt-1"
+                  [class]="priorityConfig[project.priority].dot"
+                  style="width:10px;height:10px;display:inline-block;"></span>
+                <div class="flex-grow-1 overflow-hidden">
+                  <h6 class="fw-bold mb-0 text-truncate">{{ project.name }}</h6>
+                  <small class="text-muted font-monospace">{{ project.code }}</small>
+                </div>
+                <span class="badge rounded-pill flex-shrink-0" [class]="statusConfig[project.status].badge">
+                  {{ statusConfig[project.status].label }}
+                </span>
+              </div>
+
+              <!-- Description -->
+              <p class="text-muted small mb-3" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                {{ project.description }}
+              </p>
+
+              <!-- Progress -->
+              <div class="mb-3">
+                <div class="d-flex justify-content-between small mb-1">
+                  <span class="text-muted">Progress</span>
+                  <span class="fw-semibold">{{ project.progress }}%</span>
+                </div>
+                <div class="progress" style="height:6px;">
+                  <div
+                    class="progress-bar"
+                    [class.bg-success]="project.progress === 100"
+                    [class.bg-primary]="project.progress < 100"
+                    [style.width.%]="project.progress">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Stats row -->
+              <div class="row g-2 text-center small">
+                <div class="col-4">
+                  <div class="bg-light rounded p-2">
+                    <div class="fw-bold">{{ project.teamSize }}</div>
+                    <div class="text-muted" style="font-size:0.7rem;">Members</div>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="bg-light rounded p-2">
+                    <div class="fw-bold text-success">{{ project.budget | currencyFormat }}</div>
+                    <div class="text-muted" style="font-size:0.7rem;">Budget</div>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="bg-light rounded p-2">
+                    <div class="fw-bold text-warning">{{ project.spent | currencyFormat }}</div>
+                    <div class="text-muted" style="font-size:0.7rem;">Spent</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card footer: manager + dates -->
+            <div class="card-footer bg-white border-0 pt-0">
+              <div class="d-flex justify-content-between align-items-center small text-muted">
+                <span>
+                  <i class="bi bi-person me-1"></i>{{ project.managerName }}
+                </span>
+                <span>
+                  <i class="bi bi-calendar me-1"></i>{{ project.endDate | dateFormat:'short' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      } @empty {
+        <div class="col-12 text-center py-5 text-muted">
+          <i class="bi bi-kanban display-5 d-block mb-2"></i>
+          No projects match the selected filter.
+        </div>
+      }
+    </div>
+  }
+
+</div>

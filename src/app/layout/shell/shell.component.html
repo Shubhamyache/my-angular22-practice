@@ -1,18 +1,79 @@
-<div class="d-flex flex-column min-vh-100">
+<!--
+  ┌──────────────────────────────────────────────────────────┐
+  │  EMS Shell Layout                                        │
+  │                                                          │
+  │  ┌─────────────────────── Navbar (56px) ───────────────┐ │
+  │  └─────────────────────────────────────────────────────┘ │
+  │  ┌──────────┬──────────────────────────────────────────┐ │
+  │  │ Sidebar  │  <router-outlet>                         │ │
+  │  │ (250px / │  → Angular inserts the matched           │ │
+  │  │  64px /  │    component HERE as a sibling of        │ │
+  │  │  hidden) │    the <router-outlet> element           │ │
+  │  └──────────┴──────────────────────────────────────────┘ │
+  │  ┌─────────────────────── Footer (40px) ───────────────┐ │
+  │  └─────────────────────────────────────────────────────┘ │
+  └──────────────────────────────────────────────────────────┘
+-->
 
-  <!-- Top Navbar -->
-  <app-navbar (menuToggled)="toggleSidebar()" />
+<div class="ems-layout">
 
-  <!-- Body: Sidebar + Main -->
-  <div class="d-flex flex-grow-1" style="min-height: 0;">
-    <app-sidebar [isOpen]="sidebarOpen()" />
+  <!-- ① TOP NAVBAR ─────────────────────────────────────────────────────────── -->
+  <!--
+    Why it lives OUTSIDE the body row:
+    The navbar must span full width above both sidebar and content.
+    It is sticky-top so it stays visible when content scrolls.
+  -->
+  <app-navbar
+    [pageTitle]="pageTitle()"
+    [pageIcon]="pageIcon()"
+    [sidebarOpen]="sidebarOpen()"
+    (menuToggled)="toggleSidebar()" />
 
-    <main class="main-content flex-grow-1 p-4 overflow-auto bg-light">
-      <router-outlet />
+  <!-- ② BODY ROW (sidebar + content) ──────────────────────────────────────── -->
+  <!--
+    overflow:hidden is critical here.
+    It lets the inner content area scroll independently
+    without the whole page scrolling.
+  -->
+  <div class="ems-body">
+
+    <!-- ② A  LEFT SIDEBAR ─────────────────────────────────────────────── -->
+    <!--
+      On desktop: part of the normal flex flow (takes up width).
+      On mobile:  position:fixed, slides in from left as an overlay.
+      [isOpen]  → controls width (desktop) or translateX (mobile).
+      [isMobile] → tells sidebar which behavior to apply.
+    -->
+    <app-sidebar
+      [isOpen]="sidebarOpen()"
+      [isMobile]="isMobile()"
+      (closeRequested)="closeOverlay()" />
+
+    <!-- ② B  MOBILE BACKDROP OVERLAY ─────────────────────────────────── -->
+    <!--
+      Rendered only on mobile when sidebar is open.
+      Clicking it closes the sidebar (standard mobile drawer pattern).
+    -->
+    @if (showOverlay()) {
+      <div class="sidebar-overlay" (click)="closeOverlay()"></div>
+    }
+
+    <!-- ② C  MAIN CONTENT AREA ────────────────────────────────────────── -->
+    <!--
+      overflow-y:auto means only this section scrolls.
+      <router-outlet> is the Angular placeholder.
+      Angular inserts the matched component as a DOM sibling
+      immediately AFTER the <router-outlet> tag.
+    -->
+    <main class="ems-content">
+      <div class="container-fluid p-4">
+        <router-outlet />
+      </div>
     </main>
+
   </div>
 
-  <!-- Footer -->
+  <!-- ③ FOOTER ─────────────────────────────────────────────────────────────── -->
   <app-footer />
 
 </div>
