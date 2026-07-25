@@ -1,0 +1,120 @@
+<div class="container-fluid py-2">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="fw-bold mb-0">
+        <i class="bi bi-people-fill me-2 text-primary"></i>Employees
+        <span class="badge bg-primary ms-2">{{ store.totalCount() }}</span>
+      </h2>
+      <small class="text-muted">
+        <span class="text-success fw-semibold">{{ store.activeEmployees().length }}</span> active &bull;
+        <span class="text-secondary">{{ store.inactiveCount() }}</span> inactive
+      </small>
+    </div>
+    <a routerLink="create" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i> Add Employee
+    </a>
+  </div>
+
+  <!-- Loading -->
+  @if (store.loading()) {
+    <app-loader />
+  }
+
+  <!-- Error -->
+  @else if (store.error()) {
+    <div class="alert alert-danger d-flex align-items-center gap-2">
+      <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+      <span>{{ store.error() }}</span>
+      <button class="btn btn-sm btn-outline-danger ms-auto" (click)="store.loadEmployees()">
+        <i class="bi bi-arrow-clockwise me-1"></i>Retry
+      </button>
+    </div>
+  }
+
+  <!-- Table -->
+  @else {
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark">
+              <tr>
+                <th class="ps-4">Code</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Department</th>
+                <th>Job Title</th>
+                <th>Status</th>
+                <th class="text-end pe-4">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (emp of store.employees(); track emp.id) {
+                <tr>
+                  <td class="ps-4">
+                    <span class="badge bg-light text-dark border font-monospace">
+                      {{ emp.employeeCode }}
+                    </span>
+                  </td>
+                  <td class="fw-semibold">
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0"
+                        style="width:32px;height:32px;font-size:0.75rem;font-weight:700;">
+                        {{ emp.firstName[0] }}{{ emp.lastName[0] }}
+                      </div>
+                      {{ emp.firstName }} {{ emp.lastName }}
+                    </div>
+                  </td>
+                  <td class="text-muted small">{{ emp.email }}</td>
+                  <td>{{ emp.department }}</td>
+                  <td class="text-muted small">{{ emp.jobTitle }}</td>
+                  <td>
+                    <span
+                      class="badge rounded-pill"
+                      [class.bg-success]="emp.isActive"
+                      [class.bg-secondary]="!emp.isActive">
+                      {{ emp.isActive ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+                  <td class="text-end pe-4">
+                    <div class="d-flex gap-1 justify-content-end">
+                      <a [routerLink]="[emp.id]"
+                        class="btn btn-sm btn-outline-primary"
+                        title="View">
+                        <i class="bi bi-eye"></i>
+                      </a>
+                      <a [routerLink]="[emp.id, 'edit']"
+                        class="btn btn-sm btn-outline-warning"
+                        title="Edit">
+                        <i class="bi bi-pencil"></i>
+                      </a>
+                      <button
+                        class="btn btn-sm btn-outline-danger"
+                        title="Delete"
+                        (click)="confirmDelete(emp.id)">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox display-6 d-block mb-2"></i>
+                    No employees found.
+                    <a routerLink="create" class="d-block mt-2 btn btn-sm btn-outline-primary">
+                      <i class="bi bi-plus-lg me-1"></i>Add First Employee
+                    </a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

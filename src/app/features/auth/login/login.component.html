@@ -1,0 +1,100 @@
+<div class="min-vh-100 d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, #1a1d23 0%, #0d1117 100%);">
+  <div class="card shadow-lg border-0" style="width: 420px; border-radius: 1rem; overflow: hidden;">
+
+    <!-- Header -->
+    <div class="card-header bg-dark text-white text-center py-4 border-0">
+      <div class="rounded-circle bg-primary d-inline-flex align-items-center justify-content-center mb-3"
+        style="width: 64px; height: 64px;">
+        <i class="bi bi-building-fill-gear fs-3"></i>
+      </div>
+      <h4 class="fw-bold mb-1">Employee Management</h4>
+      <p class="text-secondary small mb-0">Sign in to your account</p>
+    </div>
+
+    <!-- Body -->
+    <div class="card-body p-4">
+      @if (errorMessage()) {
+        <div class="alert alert-danger alert-dismissible d-flex align-items-center gap-2 py-2">
+          <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+          <span>{{ errorMessage() }}</span>
+          <button type="button" class="btn-close ms-auto" (click)="errorMessage.set(null)"></button>
+        </div>
+      }
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+
+        <!-- Email -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">Email Address</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0">
+              <i class="bi bi-envelope text-muted"></i>
+            </span>
+            <input
+              formControlName="email"
+              type="email"
+              class="form-control border-start-0"
+              [class.is-invalid]="email?.invalid && email?.touched"
+              placeholder="admin@company.com"
+              autocomplete="email" />
+            @if (email?.invalid && email?.touched) {
+              <div class="invalid-feedback">
+                @if (email?.errors?.['required']) { Email is required. }
+                @if (email?.errors?.['email']) { Please enter a valid email. }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="mb-4">
+          <label class="form-label fw-semibold small">Password</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0">
+              <i class="bi bi-lock text-muted"></i>
+            </span>
+            <input
+              formControlName="password"
+              [type]="showPassword() ? 'text' : 'password'"
+              class="form-control border-start-0 border-end-0"
+              [class.is-invalid]="password?.invalid && password?.touched"
+              placeholder="••••••••"
+              autocomplete="current-password" />
+            <button
+              type="button"
+              class="input-group-text bg-light border-start-0"
+              (click)="togglePassword()">
+              <i [class]="'bi bi-eye' + (showPassword() ? '-slash' : '') + ' text-muted'"></i>
+            </button>
+            @if (password?.invalid && password?.touched) {
+              <div class="invalid-feedback">
+                @if (password?.errors?.['required']) { Password is required. }
+                @if (password?.errors?.['minlength']) { Minimum 6 characters required. }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <button
+          type="submit"
+          class="btn btn-primary w-100 py-2 fw-semibold"
+          [disabled]="loading()">
+          @if (loading()) {
+            <span class="spinner-border spinner-border-sm me-2"></span>
+            Signing in...
+          } @else {
+            <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+          }
+        </button>
+      </form>
+    </div>
+
+    <div class="card-footer bg-light text-center text-muted border-0 py-3">
+      <small>
+        <i class="bi bi-shield-lock me-1 text-success"></i>
+        Secured with JWT &bull; .NET 10 Identity
+      </small>
+    </div>
+  </div>
+</div>

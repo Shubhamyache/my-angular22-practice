@@ -1,0 +1,18 @@
+<div class="d-flex flex-column min-vh-100">
+
+  <!-- Top Navbar -->
+  <app-navbar (menuToggled)="toggleSidebar()" />
+
+  <!-- Body: Sidebar + Main -->
+  <div class="d-flex flex-grow-1" style="min-height: 0;">
+    <app-sidebar [isOpen]="sidebarOpen()" />
+
+    <main class="main-content flex-grow-1 p-4 overflow-auto bg-light">
+      <router-outlet />
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <app-footer />
+
+</div>

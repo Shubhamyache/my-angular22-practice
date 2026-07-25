@@ -1,1 +1,55 @@
-/* You can add global styles to this file, and also import other style files */
+// ─── Bootstrap 5 Variable Overrides (must come before bootstrap import) ─────
+// Using @use with * to bring variables into global scope without namespace
+@use 'styles/variables' as *;
+
+// ─── Bootstrap 5 ─────────────────────────────────────────────────────────────
+// Bootstrap 5 still relies on @import internally; suppress via load-path style
+@use 'bootstrap/scss/bootstrap';
+
+// ─── Custom Mixins ────────────────────────────────────────────────────────────
+@use 'styles/mixins' as *;
+
+// ─── Global App Styles ────────────────────────────────────────────────────────
+body {
+  background-color: #f4f6f9;
+}
+
+// Sidebar layout
+.sidebar {
+  background: #1a1d23;
+  width: 250px;
+  min-width: 250px;
+  transition: width 0.25s ease, min-width 0.25s ease;
+  overflow: hidden;
+}
+
+.sidebar-collapsed {
+  width: 64px;
+  min-width: 64px;
+}
+
+.sidebar-nav-link {
+  color: rgba(255, 255, 255, 0.65);
+  transition: background-color 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #fff;
+  }
+
+  &.active {
+    background-color: var(--bs-primary) !important;
+    color: #fff !important;
+  }
+}
+
+// Card hover lift effect
+.card {
+  @include card-hover;
+}
+
+// Custom scrollbar
+::-webkit-scrollbar        { width: 6px; }
+::-webkit-scrollbar-track  { background: #f1f1f1; }
+::-webkit-scrollbar-thumb  { background: #c1c1c1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }

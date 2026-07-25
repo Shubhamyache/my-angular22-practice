@@ -1,0 +1,16 @@
+<div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.5); z-index: 1050;">
+  <div [class]="'modal-dialog modal-dialog-centered modal-' + size()">
+    <div class="modal-content shadow-lg">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold">{{ title() }}</h5>
+        <button type="button" class="btn-close" (click)="close()"></button>
+      </div>
+      <div class="modal-body pt-2">
+        <ng-content></ng-content>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <ng-content select="[modal-footer]"></ng-content>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,24 @@
+// ─── Bootstrap 5 Variable Overrides ──────────────────────────────────────────
+// These must be imported BEFORE bootstrap in styles.scss
+
+$primary:        #0d6efd;
+$secondary:      #6c757d;
+$success:        #198754;
+$info:           #0dcaf0;
+$warning:        #ffc107;
+$danger:         #dc3545;
+$dark:           #1a1d23;
+$light:          #f4f6f9;
+
+$font-size-base:     0.9rem;
+$font-family-sans-serif: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+$border-radius:      0.5rem;
+$border-radius-lg:   0.75rem;
+$border-radius-sm:   0.3rem;
+
+$card-border-width:  0;
+$card-box-shadow:    0 0.125rem 0.5rem rgba(0, 0, 0, 0.08);
+
+$navbar-dark-brand-color: #ffffff;
+$table-striped-bg:        rgba(0, 0, 0, 0.02);
