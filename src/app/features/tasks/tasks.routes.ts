@@ -1,16 +1,17 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════
+ * TASKS FEATURE ROUTES — List, Board, Create, Edit, Detail
+ * ═══════════════════════════════════════════════════════════════════
+ *
+ * /tasks           → Task list view
+ * /tasks/board     → Kanban board view
+ * /tasks/create    → Create new task
+ * /tasks/:id       → Task detail
+ * /tasks/:id/edit  → Edit task
+ */
+
 import { Routes } from '@angular/router';
 
-/**
- * TASKS feature routes — demonstrates nested child routes.
- *
- * /tasks         → TaskListComponent  (list view)
- * /tasks/board   → TaskBoardComponent (kanban view)
- *
- * Both live inside the same feature chunk that is lazy-loaded
- * when the user first navigates to /tasks.
- * After the initial load, switching between list and board
- * is instant — no network request needed.
- */
 export const TASK_ROUTES: Routes = [
   {
     path: '',
@@ -21,5 +22,20 @@ export const TASK_ROUTES: Routes = [
     path: 'board',
     loadComponent: () =>
       import('./task-board/task-board.component').then(c => c.TaskBoardComponent)
+  },
+  {
+    path: 'create',
+    loadComponent: () =>
+      import('./task-form/task-form.component').then(c => c.TaskFormComponent)
+  },
+  {
+    path: ':id',
+    loadComponent: () =>
+      import('./task-detail/task-detail.component').then(c => c.TaskDetailComponent)
+  },
+  {
+    path: ':id/edit',
+    loadComponent: () =>
+      import('./task-form/task-form.component').then(c => c.TaskFormComponent)
   }
 ];

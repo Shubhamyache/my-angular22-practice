@@ -40,6 +40,11 @@ export const SETTINGS_ROUTES: Routes = [
         loadComponent: () =>
           import('./notifications/notifications-settings.component').then(c => c.NotificationsSettingsComponent)
       },
+      {
+        path: 'preferences',
+        loadComponent: () =>
+          import('./preferences/preferences-settings.component').then(c => c.PreferencesSettingsComponent)
+      },
       { path: '', redirectTo: 'general', pathMatch: 'full' }
     ]
   }

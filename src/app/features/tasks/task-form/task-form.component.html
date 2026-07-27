@@ -1,0 +1,200 @@
+<div class="container-fluid py-2">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-0">
+        <i class="bi bi-check2-square me-2 text-primary"></i>
+        {{ isEditMode() ? 'Edit Task' : 'Create New Task' }}
+      </h2>
+      <small class="text-muted">{{ isEditMode() ? 'Update task information' : 'Fill in the details to create a new task' }}</small>
+    </div>
+    <button type="button" class="btn btn-outline-secondary" (click)="onCancel()">
+      <i class="bi bi-x-lg me-1"></i> Cancel
+    </button>
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-danger alert-dismissible">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      {{ error() }}
+      <button type="button" class="btn-close" (click)="error.set(null)"></button>
+    </div>
+  }
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+
+          <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+            <!-- Task Title -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold">
+                Task Title <span class="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                class="form-control"
+                formControlName="title"
+                [class.is-invalid]="isInvalid('title')"
+                placeholder="Enter task title">
+              @if (isInvalid('title')) {
+                <div class="invalid-feedback">{{ getErrorMessage('title') }}</div>
+              }
+            </div>
+
+            <!-- Description -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Description</label>
+              <textarea
+                class="form-control"
+                formControlName="description"
+                rows="3"
+                [class.is-invalid]="isInvalid('description')"
+                placeholder="Describe the task details"></textarea>
+              @if (isInvalid('description')) {
+                <div class="invalid-feedback">{{ getErrorMessage('description') }}</div>
+              }
+            </div>
+
+            <!-- Project & Priority Row -->
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold">
+                  Project <span class="text-danger">*</span>
+                </label>
+                <select
+                  class="form-select"
+                  formControlName="projectId"
+                  [class.is-invalid]="isInvalid('projectId')">
+                  <option [value]="0">Select Project</option>
+                  @for (proj of projects; track proj.id) {
+                    <option [value]="proj.id">{{ proj.name }}</option>
+                  }
+                </select>
+                @if (isInvalid('projectId')) {
+                  <div class="invalid-feedback">{{ getErrorMessage('projectId') }}</div>
+                }
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold">
+                  Priority <span class="text-danger">*</span>
+                </label>
+                <select
+                  class="form-select"
+                  formControlName="priority"
+                  [class.is-invalid]="isInvalid('priority')">
+                  @for (p of priorities; track p) {
+                    <option [value]="p">{{ p }}</option>
+                  }
+                </select>
+                @if (isInvalid('priority')) {
+                  <div class="invalid-feedback">{{ getErrorMessage('priority') }}</div>
+                }
+              </div>
+            </div>
+
+            <!-- Assignee & Due Date Row -->
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold">
+                  Assign To <span class="text-danger">*</span>
+                </label>
+                <select
+                  class="form-select"
+                  formControlName="assigneeId"
+                  [class.is-invalid]="isInvalid('assigneeId')">
+                  <option [value]="0">Select Assignee</option>
+                  @for (user of assignees; track user.id) {
+                    <option [value]="user.id">{{ user.name }}</option>
+                  }
+                </select>
+                @if (isInvalid('assigneeId')) {
+                  <div class="invalid-feedback">{{ getErrorMessage('assigneeId') }}</div>
+                }
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold">
+                  Due Date <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="date"
+                  class="form-control"
+                  formControlName="dueDate"
+                  [class.is-invalid]="isInvalid('dueDate')">
+                @if (isInvalid('dueDate')) {
+                  <div class="invalid-feedback">{{ getErrorMessage('dueDate') }}</div>
+                }
+              </div>
+            </div>
+
+            <!-- Estimated Hours -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold">
+                Estimated Hours <span class="text-danger">*</span>
+              </label>
+              <div class="input-group">
+                <input
+                  type="number"
+                  class="form-control"
+                  formControlName="estimatedHours"
+                  [class.is-invalid]="isInvalid('estimatedHours')"
+                  placeholder="0">
+                <span class="input-group-text">hours</span>
+              </div>
+              @if (isInvalid('estimatedHours')) {
+                <div class="invalid-feedback d-block">{{ getErrorMessage('estimatedHours') }}</div>
+              }
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2 justify-content-end mt-4">
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                (click)="onCancel()"
+                [disabled]="loading()">
+                <i class="bi bi-x-circle me-1"></i> Cancel
+              </button>
+              <button
+                type="submit"
+                class="btn btn-primary"
+                [disabled]="loading() || form.invalid">
+                @if (loading()) {
+                  <span class="spinner-border spinner-border-sm me-2"></span>
+                  Saving...
+                } @else {
+                  <i class="bi bi-check-circle me-1"></i>
+                  {{ isEditMode() ? 'Update Task' : 'Create Task' }}
+                }
+              </button>
+            </div>
+
+          </form>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm bg-light">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3">
+            <i class="bi bi-lightbulb text-warning me-2"></i>Tips
+          </h6>
+          <ul class="small text-muted ps-3">
+            <li class="mb-2">Use clear, action-oriented task titles</li>
+            <li class="mb-2">Break large tasks into smaller subtasks</li>
+            <li class="mb-2">Set realistic time estimates</li>
+            <li class="mb-2">Choose appropriate priority levels</li>
+            <li class="mb-2">Assign tasks to available team members</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

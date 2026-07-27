@@ -5,14 +5,14 @@
     <div>
       <h2 class="fw-bold mb-0">
         <i class="bi bi-check2-square me-2 text-primary"></i>Tasks
-        <span class="badge bg-primary ms-2">{{ tasks().length }}</span>
+        <span class="badge bg-primary ms-2">{{ store.tasks().length }}</span>
       </h2>
-      <small class="text-muted">{{ filtered().length }} shown</small>
+      <small class="text-muted">{{ store.filteredTasks().length }} shown</small>
     </div>
     <div class="d-flex gap-2">
       <!-- View switcher: list ↔ board -->
       <div class="btn-group btn-group-sm">
-        <a routerLink="/tasks"       routerLinkActive="active btn-primary"
+        <a routerLink="/tasks" routerLinkActive="active btn-primary"
           [routerLinkActiveOptions]="{ exact: true }"
           class="btn btn-outline-secondary">
           <i class="bi bi-list-task me-1"></i>List
@@ -22,32 +22,141 @@
           <i class="bi bi-trello me-1"></i>Board
         </a>
       </div>
-      <button class="btn btn-primary btn-sm">
+      <a routerLink="/tasks/create" class="btn btn-primary btn-sm">
         <i class="bi bi-plus-lg me-1"></i> New Task
-      </button>
+      </a>
     </div>
   </div>
 
-  <!-- Status filter chips -->
-  <div class="d-flex flex-wrap gap-2 mb-4">
-    @for (s of statuses; track s) {
-      <button
-        class="btn btn-sm rounded-pill"
-        [class.btn-primary]="activeStatus() === s"
-        [class.btn-outline-secondary]="activeStatus() !== s"
-        (click)="setStatus(s)">
-        @if (s !== 'All') {
-          <i [class]="'bi ' + statusConfig[s].icon + ' me-1'"></i>
+  <!-- Search & Filters Row -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-5">
+      <div class="input-group">
+        <span class="input-group-text bg-white">
+          <i class="bi bi-search"></i>
+        </span>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search tasks..."
+          [(ngModel)]="searchTerm"
+          (input)="onSearch(searchTerm)">
+        @if (searchTerm) {
+          <button class="btn btn-outline-secondary" type="button" (click)="searchTerm = ''; onSearch('')">
+            <i class="bi bi-x-lg"></i>
+          </button>
         }
-        {{ s === 'All' ? 'All Tasks' : statusConfig[s].label }}
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <select class="form-select" (change)="onStatusFilterChange($event)">
+        <option value="">All Statuses</option>
+        <option value="Todo">To Do</option>
+        <option value="InProgress">In Progress</option>
+        <option value="InReview">In Review</option>
+        <option value="Done">Done</option>
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <select class="form-select" (change)="onPriorityFilterChange($event)">
+        <option value="">All Priorities</option>
+        <option value="Low">Low</option>
+        <option value="Medium">Medium</option>
+        <option value="High">High</option>
+        <option value="Critical">Critical</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Sort & Clear Row -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex align-items-center gap-2">
+      <span class="text-muted small fw-semibold">SORT BY:</span>
+      <div class="btn-group btn-group-sm">
+        <button class="btn btn-outline-secondary" (click)="onSort('title')">
+          Title {{ getSortIcon('title') }}
+        </button>
+        <button class="btn btn-outline-secondary" (click)="onSort('dueDate')">
+          Due Date {{ getSortIcon('dueDate') }}
+        </button>
+        <button class="btn btn-outline-secondary" (click)="onSort('priority')">
+          Priority {{ getSortIcon('priority') }}
+        </button>
+        <button class="btn btn-outline-secondary" (click)="onSort('status')">
+          Status {{ getSortIcon('status') }}
+        </button>
+      </div>
+    </div>
+
+    @if (searchTerm || store.statusFilter() || store.priorityFilter()) {
+      <button class="btn btn-sm btn-outline-secondary" (click)="clearFilters()">
+        <i class="bi bi-x-circle me-1"></i>Clear Filters
       </button>
     }
   </div>
 
-  @if (loading()) {
+  <!-- Stats Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm bg-light">
+        <div class="card-body py-2 px-3">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <div class="h4 fw-bold mb-0">{{ store.stats().todo }}</div>
+              <small class="text-muted">To Do</small>
+            </div>
+            <i class="bi bi-circle text-secondary fs-3"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm bg-light">
+        <div class="card-body py-2 px-3">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <div class="h4 fw-bold mb-0">{{ store.stats().inProgress }}</div>
+              <small class="text-muted">In Progress</small>
+            </div>
+            <i class="bi bi-arrow-repeat text-primary fs-3"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm bg-light">
+        <div class="card-body py-2 px-3">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <div class="h4 fw-bold mb-0">{{ store.stats().inReview }}</div>
+              <small class="text-muted">In Review</small>
+            </div>
+            <i class="bi bi-eye text-warning fs-3"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm bg-light">
+        <div class="card-body py-2 px-3">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <div class="h4 fw-bold mb-0">{{ store.stats().done }}</div>
+              <small class="text-muted">Done</small>
+            </div>
+            <i class="bi bi-check-circle-fill text-success fs-3"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (store.loading()) {
     <app-loader />
-  } @else if (error()) {
-    <div class="alert alert-danger">{{ error() }}</div>
+  } @else if (store.error()) {
+    <div class="alert alert-danger">{{ store.error() }}</div>
   } @else {
     <div class="card border-0 shadow-sm">
       <div class="card-body p-0">
@@ -61,11 +170,12 @@
                 <th>Priority</th>
                 <th>Status</th>
                 <th>Due Date</th>
-                <th class="text-end pe-4">Hours</th>
+                <th class="text-end">Hours</th>
+                <th class="text-center pe-4">Actions</th>
               </tr>
             </thead>
             <tbody>
-              @for (task of filtered(); track task.id) {
+              @for (task of store.filteredTasks(); track task.id) {
                 <tr>
                   <td class="ps-4">
                     <div class="fw-semibold">{{ task.title }}</div>
@@ -85,7 +195,7 @@
                     </div>
                   </td>
                   <td>
-                    <span class="badge bg-transparent small" [class]="priorityConfig[task.priority].badge">
+                    <span class="badge small" [class]="priorityConfig[task.priority].badge">
                       {{ task.priority }}
                     </span>
                   </td>
@@ -95,19 +205,49 @@
                       {{ statusConfig[task.status].label }}
                     </span>
                   </td>
-                  <td class="text-muted small">{{ task.dueDate | dateFormat:'medium' }}</td>
-                  <td class="text-end pe-4">
+                  <td>
+                    <span class="small" [class.text-danger]="isOverdue(task)" [class.fw-bold]="isOverdue(task)">
+                      @if (isOverdue(task)) {
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                      }
+                      {{ task.dueDate | dateFormat:'medium' }}
+                    </span>
+                  </td>
+                  <td class="text-end">
                     <span class="small">
                       <span class="text-success fw-semibold">{{ task.loggedHours }}h</span>
                       <span class="text-muted"> / {{ task.estimatedHours }}h</span>
                     </span>
                   </td>
+                  <td class="text-center pe-4">
+                    <div class="btn-group btn-group-sm">
+                      <a [routerLink]="['/tasks', task.id]" class="btn btn-outline-secondary" title="View">
+                        <i class="bi bi-eye"></i>
+                      </a>
+                      <a [routerLink]="['/tasks', task.id, 'edit']" class="btn btn-outline-warning" title="Edit">
+                        <i class="bi bi-pencil"></i>
+                      </a>
+                      <button class="btn btn-outline-danger" (click)="confirmDelete(task)" title="Delete">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="7" class="text-center py-5 text-muted">
+                  <td colspan="8" class="text-center py-5 text-muted">
                     <i class="bi bi-inbox display-6 d-block mb-2"></i>
-                    No tasks found.
+                    @if (searchTerm || store.statusFilter() || store.priorityFilter()) {
+                      <p class="mb-1">No tasks match your filters</p>
+                      <button class="btn btn-sm btn-outline-secondary" (click)="clearFilters()">
+                        <i class="bi bi-x-circle me-1"></i>Clear Filters
+                      </button>
+                    } @else {
+                      <p class="mb-1">No tasks found. Create your first task!</p>
+                      <a routerLink="/tasks/create" class="btn btn-sm btn-primary">
+                        <i class="bi bi-plus-lg me-1"></i>New Task
+                      </a>
+                    }
                   </td>
                 </tr>
               }

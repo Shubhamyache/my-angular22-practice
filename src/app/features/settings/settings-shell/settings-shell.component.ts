@@ -18,6 +18,7 @@ export class SettingsShellComponent {
     { label: 'General',       icon: 'bi-sliders',          route: 'general' },
     { label: 'Profile',       icon: 'bi-person-circle',    route: 'profile' },
     { label: 'Security',      icon: 'bi-shield-lock-fill', route: 'security' },
-    { label: 'Notifications', icon: 'bi-bell-fill',        route: 'notifications' }
+    { label: 'Notifications', icon: 'bi-bell-fill',        route: 'notifications' },
+    { label: 'Preferences',   icon: 'bi-gear-fill',        route: 'preferences' }
   ];
 }

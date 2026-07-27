@@ -5,48 +5,136 @@
     <div>
       <h2 class="fw-bold mb-0">
         <i class="bi bi-kanban-fill me-2 text-primary"></i>Projects
-        <span class="badge bg-primary ms-2">{{ projects().length }}</span>
+        <span class="badge bg-primary ms-2">{{ store.stats().total }}</span>
       </h2>
       <small class="text-muted">
-        {{ filtered().length }} shown &bull;
-        {{ projects().filter(p => p.status === 'Active').length }} active
+        {{ store.filteredProjects().length }} shown &bull;
+        <span class="text-success fw-semibold">{{ store.stats().active }}</span> active &bull;
+        <span class="text-primary">{{ store.stats().completed }}</span> completed
       </small>
     </div>
-    <button class="btn btn-primary">
+    <a routerLink="create" class="btn btn-primary">
       <i class="bi bi-plus-lg me-1"></i> New Project
-    </button>
+    </a>
   </div>
 
-  <!-- Status filter chips -->
-  <div class="d-flex flex-wrap gap-2 mb-4">
-    @for (f of statusFilters; track f) {
-      <button
-        class="btn btn-sm rounded-pill"
-        [class.btn-primary]="activeFilter() === f"
-        [class.btn-outline-secondary]="activeFilter() !== f"
-        (click)="setFilter(f)">
-        {{ f === 'All' ? 'All Projects' : f }}
-      </button>
-    }
+  <!-- Search and Filters -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+      <div class="row g-3 align-items-center">
+        <!-- Search -->
+        <div class="col-md-5">
+          <div class="input-group">
+            <span class="input-group-text bg-white">
+              <i class="bi bi-search"></i>
+            </span>
+            <input
+              type="text"
+              class="form-control border-start-0"
+              placeholder="Search by name, code, description..."
+              [(ngModel)]="searchTerm"
+              (input)="onSearch(searchTerm)">
+            @if (searchTerm) {
+              <button
+                class="btn btn-outline-secondary"
+                type="button"
+                (click)="searchTerm = ''; onSearch('')">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Status Filter -->
+        <div class="col-md-4">
+          <div class="d-flex flex-wrap gap-2">
+            @for (f of statusFilters; track f) {
+              <button
+                class="btn btn-sm rounded-pill"
+                [class.btn-primary]="store.statusFilter() === f"
+                [class.btn-outline-secondary]="store.statusFilter() !== f"
+                (click)="onStatusFilterChange(f)">
+                {{ f === 'All' ? 'All' : statusConfig[f].label }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Sort Controls -->
+        <div class="col-md-3 text-end">
+          <div class="dropdown d-inline">
+            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button"
+              data-bs-toggle="dropdown">
+              <i class="bi bi-sort-down me-1"></i> Sort
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li>
+                <button class="dropdown-item" (click)="onSort('name')">
+                  <i class="bi bi-font me-2"></i> Name
+                  <i [class]="getSortIcon('name')" class="float-end"></i>
+                </button>
+              </li>
+              <li>
+                <button class="dropdown-item" (click)="onSort('startDate')">
+                  <i class="bi bi-calendar me-2"></i> Start Date
+                  <i [class]="getSortIcon('startDate')" class="float-end"></i>
+                </button>
+              </li>
+              <li>
+                <button class="dropdown-item" (click)="onSort('budget')">
+                  <i class="bi bi-cash me-2"></i> Budget
+                  <i [class]="getSortIcon('budget')" class="float-end"></i>
+                </button>
+              </li>
+              <li>
+                <button class="dropdown-item" (click)="onSort('progress')">
+                  <i class="bi bi-graph-up me-2"></i> Progress
+                  <i [class]="getSortIcon('progress')" class="float-end"></i>
+                </button>
+              </li>
+            </ul>
+          </div>
+          @if (store.searchQuery() || store.statusFilter() !== 'All') {
+            <button class="btn btn-outline-danger btn-sm ms-2" (click)="clearFilters()">
+              <i class="bi bi-x-circle me-1"></i> Clear
+            </button>
+          }
+        </div>
+      </div>
+    </div>
   </div>
 
-  @if (loading()) {
+  <!-- Loading State -->
+  @if (store.loading()) {
     <app-loader />
-  } @else if (error()) {
-    <div class="alert alert-danger">{{ error() }}</div>
-  } @else {
+  }
+
+  <!-- Error State -->
+  @else if (store.error()) {
+    <div class="alert alert-danger d-flex align-items-center gap-2">
+      <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+      <span>{{ store.error() }}</span>
+      <button class="btn btn-sm btn-outline-danger ms-auto" (click)="store.loadProjects()">
+        <i class="bi bi-arrow-clockwise me-1"></i>Retry
+      </button>
+    </div>
+  }
+
+  <!-- Projects Grid -->
+  @else {
     <div class="row g-4">
-      @for (project of filtered(); track project.id) {
+      @for (project of store.filteredProjects(); track project.id) {
         <div class="col-12 col-md-6 col-xl-4">
-          <div class="card border-0 shadow-sm h-100">
+          <div class="card border-0 shadow-sm h-100 hover-lift" style="transition: transform 0.2s;">
             <div class="card-body">
 
-              <!-- Top row: priority dot + title + status badge -->
+              <!-- Header: Priority + Title + Status -->
               <div class="d-flex align-items-start gap-2 mb-3">
                 <span
                   class="rounded-circle flex-shrink-0 mt-1"
                   [class]="priorityConfig[project.priority].dot"
-                  style="width:10px;height:10px;display:inline-block;"></span>
+                  style="width:10px;height:10px;display:inline-block;"
+                  [title]="project.priority + ' Priority'"></span>
                 <div class="flex-grow-1 overflow-hidden">
                   <h6 class="fw-bold mb-0 text-truncate">{{ project.name }}</h6>
                   <small class="text-muted font-monospace">{{ project.code }}</small>
@@ -61,7 +149,7 @@
                 {{ project.description }}
               </p>
 
-              <!-- Progress -->
+              <!-- Progress Bar -->
               <div class="mb-3">
                 <div class="d-flex justify-content-between small mb-1">
                   <span class="text-muted">Progress</span>
@@ -77,8 +165,8 @@
                 </div>
               </div>
 
-              <!-- Stats row -->
-              <div class="row g-2 text-center small">
+              <!-- Stats Grid -->
+              <div class="row g-2 text-center small mb-3">
                 <div class="col-4">
                   <div class="bg-light rounded p-2">
                     <div class="fw-bold">{{ project.teamSize }}</div>
@@ -98,9 +186,25 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Actions -->
+              <div class="d-flex gap-1 justify-content-end">
+                <a [routerLink]="[project.id]" class="btn btn-sm btn-outline-primary" title="View Details">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a [routerLink]="[project.id, 'edit']" class="btn btn-sm btn-outline-warning" title="Edit">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <button
+                  class="btn btn-sm btn-outline-danger"
+                  title="Delete"
+                  (click)="confirmDelete(project.id, project.name)">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
             </div>
 
-            <!-- Card footer: manager + dates -->
+            <!-- Footer: Manager + Dates -->
             <div class="card-footer bg-white border-0 pt-0">
               <div class="d-flex justify-content-between align-items-center small text-muted">
                 <span>
@@ -114,9 +218,23 @@
           </div>
         </div>
       } @empty {
-        <div class="col-12 text-center py-5 text-muted">
-          <i class="bi bi-kanban display-5 d-block mb-2"></i>
-          No projects match the selected filter.
+        <!-- Empty State -->
+        <div class="col-12">
+          <div class="text-center py-5">
+            <i class="bi bi-kanban display-1 text-muted d-block mb-3"></i>
+            <h5 class="text-muted">No projects found</h5>
+            <p class="text-muted">
+              @if (store.searchQuery() || store.statusFilter() !== 'All') {
+                Try adjusting your filters or
+                <button class="btn btn-link p-0" (click)="clearFilters()">clear all filters</button>
+              } @else {
+                Get started by creating your first project
+              }
+            </p>
+            <a routerLink="create" class="btn btn-primary mt-2">
+              <i class="bi bi-plus-lg me-1"></i>Create Project
+            </a>
+          </div>
         </div>
       }
     </div>

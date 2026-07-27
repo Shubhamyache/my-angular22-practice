@@ -1,0 +1,257 @@
+<div class="container-fluid py-2">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-0">
+        <i class="bi bi-kanban-fill me-2 text-primary"></i>
+        {{ isEditMode() ? 'Edit Project' : 'Create New Project' }}
+      </h2>
+      <small class="text-muted">{{ isEditMode() ? 'Update project information' : 'Fill in the details to create a new project' }}</small>
+    </div>
+    <button type="button" class="btn btn-outline-secondary" (click)="onCancel()">
+      <i class="bi bi-x-lg me-1"></i> Cancel
+    </button>
+  </div>
+
+  <!-- Error Alert -->
+  @if (error()) {
+    <div class="alert alert-danger alert-dismissible">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      {{ error() }}
+      <button type="button" class="btn-close" (click)="error.set(null)"></button>
+    </div>
+  }
+
+  <!-- Form -->
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+
+          <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+            <!-- Project Name -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold">
+                Project Name <span class="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                class="form-control"
+                formControlName="name"
+                [class.is-invalid]="isInvalid('name')"
+                placeholder="Enter project name">
+              @if (isInvalid('name')) {
+                <div class="invalid-feedback">
+                  {{ getErrorMessage('name') }}
+                </div>
+              }
+            </div>
+
+            <!-- Project Code -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold">
+                Project Code <span class="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                class="form-control"
+                formControlName="code"
+                [class.is-invalid]="isInvalid('code')"
+                placeholder="e.g., PROJ-001">
+              <small class="form-text text-muted">Unique identifier for this project</small>
+              @if (isInvalid('code')) {
+                <div class="invalid-feedback">
+                  {{ getErrorMessage('code') }}
+                </div>
+              }
+            </div>
+
+            <!-- Description -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Description</label>
+              <textarea
+                class="form-control"
+                formControlName="description"
+                rows="3"
+                [class.is-invalid]="isInvalid('description')"
+                placeholder="Describe the project goals and scope"></textarea>
+              @if (isInvalid('description')) {
+                <div class="invalid-feedback">
+                  {{ getErrorMessage('description') }}
+                </div>
+              }
+            </div>
+
+            <!-- Priority & Manager Row -->
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold">
+                  Priority <span class="text-danger">*</span>
+                </label>
+                <select
+                  class="form-select"
+                  formControlName="priority"
+                  [class.is-invalid]="isInvalid('priority')">
+                  @for (p of priorities; track p) {
+                    <option [value]="p">{{ p }}</option>
+                  }
+                </select>
+                @if (isInvalid('priority')) {
+                  <div class="invalid-feedback">
+                    {{ getErrorMessage('priority') }}
+                  </div>
+                }
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold">
+                  Project Manager <span class="text-danger">*</span>
+                </label>
+                <select
+                  class="form-select"
+                  formControlName="managerId"
+                  [class.is-invalid]="isInvalid('managerId')">
+                  <option [value]="0">Select Manager</option>
+                  @for (mgr of managers; track mgr.id) {
+                    <option [value]="mgr.id">{{ mgr.name }}</option>
+                  }
+                </select>
+                @if (isInvalid('managerId')) {
+                  <div class="invalid-feedback">
+                    {{ getErrorMessage('managerId') }}
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Date Range Row -->
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold">
+                  Start Date <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="date"
+                  class="form-control"
+                  formControlName="startDate"
+                  [class.is-invalid]="isInvalid('startDate')">
+                @if (isInvalid('startDate')) {
+                  <div class="invalid-feedback">
+                    {{ getErrorMessage('startDate') }}
+                  </div>
+                }
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold">
+                  End Date <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="date"
+                  class="form-control"
+                  formControlName="endDate"
+                  [class.is-invalid]="isInvalid('endDate')">
+                @if (isInvalid('endDate')) {
+                  <div class="invalid-feedback">
+                    {{ getErrorMessage('endDate') }}
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Budget -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold">
+                Budget (USD) <span class="text-danger">*</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input
+                  type="number"
+                  class="form-control"
+                  formControlName="budget"
+                  [class.is-invalid]="isInvalid('budget')"
+                  placeholder="0">
+              </div>
+              @if (isInvalid('budget')) {
+                <div class="invalid-feedback d-block">
+                  {{ getErrorMessage('budget') }}
+                </div>
+              }
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2 justify-content-end mt-4">
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                (click)="onCancel()"
+                [disabled]="loading()">
+                <i class="bi bi-x-circle me-1"></i> Cancel
+              </button>
+              <button
+                type="submit"
+                class="btn btn-primary"
+                [disabled]="loading() || form.invalid">
+                @if (loading()) {
+                  <span class="spinner-border spinner-border-sm me-2"></span>
+                  Saving...
+                } @else {
+                  <i class="bi bi-check-circle me-1"></i>
+                  {{ isEditMode() ? 'Update Project' : 'Create Project' }}
+                }
+              </button>
+            </div>
+
+          </form>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar: Tips -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm bg-light">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3">
+            <i class="bi bi-lightbulb text-warning me-2"></i>Tips
+          </h6>
+          <ul class="small text-muted ps-3">
+            <li class="mb-2">Use clear, descriptive project names</li>
+            <li class="mb-2">Project codes should be unique and easy to reference</li>
+            <li class="mb-2">Set realistic budgets based on team size and duration</li>
+            <li class="mb-2">Choose the right priority level to help with resource allocation</li>
+            <li class="mb-2">End date should be after start date</li>
+          </ul>
+
+          <hr class="my-3">
+
+          <h6 class="fw-bold mb-2">
+            <i class="bi bi-info-circle text-info me-2"></i>Priority Levels
+          </h6>
+          <div class="small text-muted">
+            <div class="d-flex align-items-center mb-1">
+              <span class="badge bg-secondary me-2" style="width:60px;">Low</span>
+              <span>Non-urgent tasks</span>
+            </div>
+            <div class="d-flex align-items-center mb-1">
+              <span class="badge bg-info text-dark me-2" style="width:60px;">Medium</span>
+              <span>Standard priority</span>
+            </div>
+            <div class="d-flex align-items-center mb-1">
+              <span class="badge bg-warning text-dark me-2" style="width:60px;">High</span>
+              <span>Important projects</span>
+            </div>
+            <div class="d-flex align-items-center mb-1">
+              <span class="badge bg-danger me-2" style="width:60px;">Critical</span>
+              <span>Urgent, top priority</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
