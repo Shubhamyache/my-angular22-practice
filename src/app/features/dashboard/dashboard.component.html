@@ -1,0 +1,262 @@
+<!--
+  ═══════════════════════════════════════════════════════════════════
+  DASHBOARD TEMPLATE — Smart Component View
+  ═══════════════════════════════════════════════════════════════════
+
+  TEMPLATE STRUCTURE:
+    1. Page Header (always visible)
+    2. Stats Cards (skeleton while loading, real cards when data arrives)
+    3. Error Alert (if service call fails)
+    4. Quick Actions (visible when data is ready)
+    5. Main Content: Employees (col-lg-8) + Tasks (col-lg-4)
+    6. Recent Projects (full width)
+
+  ANGULAR TEMPLATE CONTROL FLOW (@if / @for):
+  ─────────────────────────────────────────────
+  Angular 17+ ships built-in control flow (@if, @for, @switch).
+  These REPLACE structural directives (*ngIf, *ngFor) from older Angular.
+
+  Key differences:
+    Old:  *ngIf="condition"  → structural directive, creates/destroys DOM
+    New:  @if (condition)    → built-in block, same behavior but:
+            ✓ No need to import NgIf / CommonModule
+            ✓ Better tree-shaking (only included if used)
+            ✓ TypeScript type narrowing works inside @if blocks
+            ✓ @else / @else if blocks are native (no ng-template hack)
+            ✓ @empty block in @for (replaces *ngIf="!items.length")
+
+  SIGNAL READING IN TEMPLATES:
+  ─────────────────────────────
+  Every signal is read by calling it: loading(), hasData(), stats()
+  When Angular renders this template, it tracks which signals are read.
+  If any of those signals change → Angular re-renders ONLY the affected
+  template nodes (not the entire template).
+
+  This is fundamentally different from zone.js:
+    zone.js: ANY async operation → re-check EVERY component → re-render changed
+    signals: ONLY components whose signals changed → re-render
+
+  NON-NULL ASSERTION (!) in templates:
+  ──────────────────────────────────────
+  stats()!.totalEmployees
+  The ! tells TypeScript: "I know this is not undefined here".
+  This is safe because we gate it behind @if (hasData()) which ensures
+  stats() returns a non-undefined value.
+-->
+
+<div class="container-fluid py-3">
+
+  <!-- ════════════════════════════════════════════════════════════════
+    SECTION 1: PAGE HEADER
+  ════════════════════════════════════════════════════════════════ -->
+  <div class="d-flex align-items-start align-items-md-center
+              justify-content-between mb-4
+              flex-column flex-md-row gap-3">
+
+    <!-- Greeting + subtitle -->
+    <div>
+      <h4 class="fw-bold mb-1">
+        {{ getGreeting() }},
+        <span class="text-primary">{{ authService.getUserName() || 'Administrator' }}</span>
+      </h4>
+      <p class="text-muted mb-0 small">
+        <i class="bi bi-building me-1"></i>
+        Here's what's happening across your organization today.
+      </p>
+    </div>
+
+    <!-- Last updated + Refresh button -->
+    <div class="d-flex align-items-center gap-3">
+      @if (lastUpdated()) {
+        <!--
+          DatePipe: {{ date | date:'h:mm a' }}
+          'h:mm a' format = "3:42 PM"
+          DatePipe is imported in the component's imports array.
+          It is a PURE pipe — memoized, only re-runs if the date changes.
+        -->
+        <span class="text-muted small d-none d-sm-inline">
+          <i class="bi bi-clock me-1"></i>Updated {{ lastUpdated() | date:'h:mm a' }}
+        </span>
+      }
+      <!--
+        [disabled]="loading()" — property binding to the native disabled attribute.
+        When loading() is true, the button is disabled AND visually muted.
+        Angular binds to the DOM property, not the HTML attribute:
+          property: button.disabled = true/false
+          attribute: button.setAttribute('disabled', '')
+        Property binding is faster and type-safe.
+      -->
+      <button
+        class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2"
+        (click)="onRefresh()"
+        [disabled]="loading()">
+        <!--
+          [class.bi-arrow-clockwise]="!loading()" — conditional class binding.
+          Angular adds/removes 'bi-arrow-clockwise' based on !loading().
+          [class.bi-hourglass-split]="loading()"  — adds when loading.
+          Both bindings on same element = switch between two icons.
+        -->
+        <i class="bi"
+           [class.bi-arrow-clockwise]="!loading()"
+           [class.bi-hourglass-split]="loading()"></i>
+        {{ loading() ? 'Loading…' : 'Refresh' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════
+    SECTION 2: STATS CARDS (KPI Row)
+  ════════════════════════════════════════════════════════════════ -->
+  <div class="row g-4 mb-4">
+
+    @if (!hasData()) {
+      <!--
+        SKELETON STATE — shown while data is loading (initial load only).
+        Uses @for to render 4 skeleton cards.
+        skeletonItems = [1, 2, 3, 4] defined in the component class.
+
+        Why not @for (i of [1,2,3,4]; ...)  directly?
+        Angular templates cannot use array literals — they must reference
+        a property on the component class. So we define skeletonItems there.
+
+        The StatsCardComponent accepts [loading]="true" → renders Bootstrap
+        placeholder animation instead of real content.
+        Same component, two visual modes, controlled by a single input.
+      -->
+      @for (i of skeletonItems; track i) {
+        <div class="col-12 col-sm-6 col-xl-3">
+          <app-stats-card [loading]="true" />
+        </div>
+      }
+
+    } @else {
+      <!--
+        REAL STATS — rendered once data arrives.
+        Each stat uses stats()! (non-null assertion) which is safe
+        because @else means hasData() was true → summary() is not null.
+
+        [change] values:
+          +5.2  → green arrow up (good — more employees)
+          +12   → green arrow up (good — more projects)
+          -8.5  → shown as -8.5% (red arrow down — more pending tasks would be bad)
+          0     → gray dash (no change)
+      -->
+      <div class="col-12 col-sm-6 col-xl-3">
+        <app-stats-card
+          label="Total Employees"
+          [value]="stats()!.totalEmployees"
+          icon="bi-people-fill"
+          color="primary"
+          [change]="stats()!.employeeChange" />
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <app-stats-card
+          label="Active Projects"
+          [value]="stats()!.activeProjects"
+          icon="bi-kanban-fill"
+          color="success"
+          [change]="stats()!.projectChange" />
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <app-stats-card
+          label="Pending Tasks"
+          [value]="stats()!.pendingTasks"
+          icon="bi-check2-square"
+          color="warning"
+          [change]="stats()!.taskChange" />
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <app-stats-card
+          label="Departments"
+          [value]="stats()!.totalDepartments"
+          icon="bi-diagram-3-fill"
+          color="info"
+          [change]="stats()!.departmentChange" />
+      </div>
+    }
+
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════
+    SECTION 3: ERROR ALERT
+  ════════════════════════════════════════════════════════════════ -->
+  @if (error()) {
+    <div class="alert alert-danger alert-dismissible d-flex align-items-center gap-2 mb-4" role="alert">
+      <i class="bi bi-exclamation-triangle-fill fs-5 flex-shrink-0"></i>
+      <div class="flex-grow-1">
+        <strong>Dashboard Error</strong> — {{ error() }}
+      </div>
+      <button class="btn btn-sm btn-danger" (click)="onRefresh()">
+        <i class="bi bi-arrow-clockwise me-1"></i>Retry
+      </button>
+    </div>
+  }
+
+  <!-- ════════════════════════════════════════════════════════════════
+    SECTIONS 4–6: MAIN CONTENT (shown only when data is ready)
+  ════════════════════════════════════════════════════════════════ -->
+  @if (hasData()) {
+
+    <!-- ── SECTION 4: Quick Actions ─────────────────────────────── -->
+    <div class="mb-4">
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-lightning-fill text-warning"></i>
+        <span class="text-uppercase text-muted fw-semibold"
+              style="font-size:0.7rem;letter-spacing:0.08em;">Quick Actions</span>
+      </div>
+      <!--
+        [actions]="quickActions" — passes the static QuickAction[] array.
+        quickActions is a plain array (not a signal), so no () needed.
+        The component receives it via: readonly actions = input<QuickAction[]>([])
+      -->
+      <app-quick-actions [actions]="quickActions" />
+    </div>
+
+    <!-- ── SECTION 5: Recent Employees + Recent Tasks ────────────── -->
+    <!--
+      Bootstrap 12-column grid:
+        col-12        → full width on all screens (default)
+        col-lg-8      → 8 of 12 columns on large screens (≥992px)
+        col-lg-4      → 4 of 12 columns on large screens
+
+      On mobile: both columns are col-12 → stack vertically.
+      On desktop: side by side, 2:1 ratio.
+    -->
+    <div class="row g-4 mb-4">
+
+      <div class="col-12 col-lg-8">
+        <!--
+          [employees]="employees()" — passes the computed signal VALUE.
+          employees() evaluates the computed signal → returns RecentEmployee[].
+          The child component receives it as a Signal Input: input<RecentEmployee[]>([]).
+
+          SIGNAL PROPAGATION CHAIN:
+            dashService._summary (source)
+              → summary (readonly alias)
+                → employees (computed in DashboardComponent)
+                  → RecentEmployeesComponent.employees (signal input)
+                    → @for rows in child template
+
+          When summary changes → employees computed is marked dirty →
+          when the child template reads employees() → it re-evaluates →
+          new value → Angular re-renders the table rows.
+        -->
+        <app-recent-employees [employees]="employees()" />
+      </div>
+
+      <div class="col-12 col-lg-4">
+        <app-recent-tasks [tasks]="tasks()" />
+      </div>
+
+    </div>
+
+    <!-- ── SECTION 6: Recent Projects ───────────────────────────── -->
+    <div class="row g-4 mb-2">
+      <div class="col-12">
+        <app-recent-projects [projects]="projects()" />
+      </div>
+    </div>
+
+  } <!-- end @if (hasData()) -->
+
+</div>

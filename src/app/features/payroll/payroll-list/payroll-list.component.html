@@ -1,0 +1,68 @@
+<div class="container-fluid py-2">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <h2 class="fw-bold mb-0">
+      <i class="bi bi-cash-coin me-2 text-warning"></i>Payroll
+    </h2>
+    <button class="btn btn-warning text-dark">
+      <i class="bi bi-play-circle me-1"></i> Run Payroll
+    </button>
+  </div>
+
+  @if (loading()) {
+    <app-loader />
+  } @else if (error()) {
+    <div class="alert alert-danger">{{ error() }}</div>
+  } @else {
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark">
+              <tr>
+                <th class="ps-4">Employee</th>
+                <th>Department</th>
+                <th>Period</th>
+                <th class="text-end">Gross</th>
+                <th class="text-end">Deductions</th>
+                <th class="text-end">Net Pay</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of payrolls(); track p.id) {
+                <tr>
+                  <td class="ps-4 fw-semibold">{{ p.employeeName }}</td>
+                  <td class="text-muted small">{{ p.department }}</td>
+                  <td class="text-muted small">
+                    {{ p.periodStart | dateFormat:'short' }} –
+                    {{ p.periodEnd   | dateFormat:'short' }}
+                  </td>
+                  <td class="text-end">{{ p.grossSalary | currencyFormat }}</td>
+                  <td class="text-end text-danger">-{{ p.deductions | currencyFormat }}</td>
+                  <td class="text-end fw-bold text-success">{{ p.netSalary | currencyFormat }}</td>
+                  <td>
+                    <span class="badge rounded-pill"
+                      [class.bg-warning]="p.status === 'Pending'"
+                      [class.text-dark]="p.status === 'Pending'"
+                      [class.bg-info]="p.status === 'Processed'"
+                      [class.bg-success]="p.status === 'Paid'"
+                      [class.bg-secondary]="p.status === 'Cancelled'">
+                      {{ p.status }}
+                    </span>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox display-6 d-block mb-2"></i>
+                    No payroll records found.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  }
+</div>

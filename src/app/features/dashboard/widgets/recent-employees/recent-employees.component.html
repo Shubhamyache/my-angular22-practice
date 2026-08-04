@@ -1,0 +1,112 @@
+<div class="card border-0 shadow-sm h-100">
+
+  <!-- ── Card Header ──────────────────────────────────────────── -->
+  <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between py-3 px-4">
+    <div class="d-flex align-items-center gap-2">
+      <i class="bi bi-people-fill text-primary fs-5"></i>
+      <span class="fw-semibold">Recent Employees</span>
+      <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill">
+        {{ employees().length }}
+      </span>
+    </div>
+    <a routerLink="/employees" class="btn btn-sm btn-outline-primary">
+      View All <i class="bi bi-arrow-right ms-1"></i>
+    </a>
+  </div>
+
+  <!-- ── Responsive Table ──────────────────────────────────────── -->
+  <!--
+    Bootstrap's table-responsive wraps the table in a horizontal
+    scrollable container on small screens — no overflow clipping.
+  -->
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="px-4 py-3 fw-semibold text-muted small text-uppercase border-0">Employee</th>
+            <th class="py-3 fw-semibold text-muted small text-uppercase border-0 d-none d-md-table-cell">Department</th>
+            <th class="py-3 fw-semibold text-muted small text-uppercase border-0 d-none d-lg-table-cell">Joined</th>
+            <th class="py-3 fw-semibold text-muted small text-uppercase border-0">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!--
+            @for DIRECTIVE
+            ─────────────────
+            @for (item of collection; track item.id) { ... }
+
+            The 'track' expression is the IDENTITY FUNCTION.
+            Angular uses it to efficiently reconcile DOM updates:
+              - If an item's id hasn't changed → reuse existing DOM node
+              - If an item's id is new → create a new DOM node
+              - If an item's id is gone → destroy its DOM node
+
+            Without track (or with track $index):
+              → Angular destroys and recreates ALL rows on every change
+              → Expensive for large lists (animations, focus states lost)
+
+            With track emp.id (unique identifier):
+              → Angular PATCHES only the changed rows
+              → O(diff) instead of O(n) DOM operations
+          -->
+          @for (emp of employees(); track emp.id) {
+            <tr>
+
+              <!-- Avatar + Name + Job Title -->
+              <td class="px-4 py-3">
+                <div class="d-flex align-items-center gap-3">
+                  <!--
+                    Avatar circle: Bootstrap color variable via inline style.
+                    var(--bs-primary) = Bootstrap's primary CSS custom property.
+                    Using style binding instead of [class] so the color is dynamic.
+                  -->
+                  <div
+                    class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white flex-shrink-0"
+                    [style]="'width:38px;height:38px;background:var(--bs-' + emp.color + ');font-size:0.75rem;'">
+                    {{ emp.initials }}
+                  </div>
+                  <div>
+                    <div class="fw-semibold lh-1 mb-1">{{ emp.name }}</div>
+                    <div class="text-muted small">{{ emp.jobTitle }}</div>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Department: hidden on mobile (d-none d-md-table-cell) -->
+              <td class="py-3 d-none d-md-table-cell">
+                <span class="text-secondary small">{{ emp.department }}</span>
+              </td>
+
+              <!-- Join date: hidden on tablet too -->
+              <td class="py-3 d-none d-lg-table-cell">
+                <span class="text-secondary small">{{ formatDate(emp.joinDate) }}</span>
+              </td>
+
+              <!-- Status badge -->
+              <td class="py-3">
+                <span [class]="'badge rounded-pill ' + statusClass(emp.status)">
+                  {{ statusLabel(emp.status) }}
+                </span>
+              </td>
+
+            </tr>
+
+          } @empty {
+            <!--
+              @empty block: rendered when the collection is empty.
+              This handles zero state elegantly without extra @if checks.
+            -->
+            <tr>
+              <td colspan="4" class="text-center text-muted py-5">
+                <i class="bi bi-people d-block fs-1 mb-2 opacity-25"></i>
+                No recent employees to show
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

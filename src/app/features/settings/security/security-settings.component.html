@@ -1,0 +1,51 @@
+<h5 class="fw-bold mb-1">Security Settings</h5>
+<p class="text-muted small mb-4">Manage your password and authentication preferences</p>
+
+<!-- Change password -->
+<div class="mb-4 pb-4 border-bottom">
+  <h6 class="fw-semibold mb-3">Change Password</h6>
+  <form [formGroup]="passwordForm">
+    <div class="mb-3">
+      <label class="form-label fw-semibold small">Current Password</label>
+      <input formControlName="current" type="password" class="form-control" />
+    </div>
+    <div class="mb-3">
+      <label class="form-label fw-semibold small">New Password</label>
+      <input formControlName="newPass" type="password" class="form-control" />
+    </div>
+    <div class="mb-3">
+      <label class="form-label fw-semibold small">Confirm New Password</label>
+      <input formControlName="confirm" type="password" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">Update Password</button>
+  </form>
+</div>
+
+<!-- 2FA toggle -->
+<div class="mb-4 pb-4 border-bottom">
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      <h6 class="fw-semibold mb-0">Two-Factor Authentication</h6>
+      <small class="text-muted">Add an extra layer of security to your account</small>
+    </div>
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" [checked]="twoFAEnabled()"
+        (change)="twoFAEnabled.update(v => !v)" style="width:3em;height:1.5em;" />
+    </div>
+  </div>
+</div>
+
+<!-- Active sessions -->
+<div>
+  <h6 class="fw-semibold mb-3">Active Sessions</h6>
+  <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded">
+    <div class="d-flex align-items-center gap-3">
+      <i class="bi bi-laptop fs-4 text-muted"></i>
+      <div>
+        <div class="fw-semibold small">Windows — Chrome</div>
+        <small class="text-success">● Current session</small>
+      </div>
+    </div>
+    <button class="btn btn-outline-danger btn-sm" disabled>Revoke</button>
+  </div>
+</div>

@@ -1,0 +1,74 @@
+<!--
+  LEFT SIDEBAR — grouped nav items
+  CSS classes:
+    .sidebar-collapsed    → desktop 64px icon-only
+    .sidebar-mobile-open  → mobile: slides in from left
+-->
+<aside
+  class="sidebar d-flex flex-column"
+  [class.sidebar-collapsed]="!isOpen() && !isMobile()"
+  [class.sidebar-mobile-open]="isOpen() && isMobile()">
+
+  <!-- Header -->
+  <div class="sidebar-header d-flex align-items-center justify-content-between px-3 py-3">
+    @if (isOpen()) {
+      <span class="text-uppercase fw-bold sidebar-section-label">EMS</span>
+    }
+    @if (isMobile() && isOpen()) {
+      <button class="btn btn-link text-secondary p-0 ms-auto" (click)="close()" title="Close">
+        <i class="bi bi-x-lg fs-5"></i>
+      </button>
+    }
+  </div>
+
+  <!-- Grouped nav -->
+  <nav class="flex-grow-1 px-2 overflow-y-auto">
+    @for (group of navGroups; track group.heading) {
+
+      @if (isOpen()) {
+        <div class="px-2 pt-3 pb-1">
+          <span class="sidebar-section-label">{{ group.heading }}</span>
+        </div>
+      } @else {
+        <div class="border-top border-secondary border-opacity-25 my-2 mx-2"></div>
+      }
+
+      <ul class="nav flex-column gap-1">
+        @for (item of group.items; track item.route) {
+          <li class="nav-item">
+            <a
+              [routerLink]="item.route"
+              routerLinkActive="active"
+              [title]="!isOpen() ? item.label : ''"
+              class="nav-link sidebar-nav-link d-flex align-items-center gap-2 rounded">
+              <i [class]="'bi ' + item.icon + ' fs-5 flex-shrink-0'"></i>
+              @if (isOpen()) {
+                <span class="text-truncate flex-grow-1">{{ item.label }}</span>
+                @if (item.badge) {
+                  <span class="badge rounded-pill bg-primary bg-opacity-25 text-primary"
+                    style="font-size:0.65rem;">{{ item.badge }}</span>
+                }
+              }
+            </a>
+          </li>
+        }
+      </ul>
+    }
+  </nav>
+
+  <!-- Footer -->
+  @if (isOpen()) {
+    <div class="px-3 py-3 border-top" style="border-color:rgba(255,255,255,0.08) !important;">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-stack text-secondary" style="font-size:0.9rem;"></i>
+        <div>
+          <div class="text-secondary" style="font-size:0.65rem;letter-spacing:0.05em;text-transform:uppercase;">
+            Angular 22 + .NET 10
+          </div>
+          <div class="text-secondary" style="font-size:0.6rem;">v1.0.0</div>
+        </div>
+      </div>
+    </div>
+  }
+
+</aside>

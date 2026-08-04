@@ -1,0 +1,36 @@
+<div class="search-box" [class.search-box-sm]="size() === 'sm'">
+  <div class="input-group">
+    <span class="input-group-text bg-white border-end-0">
+      @if (loading()) {
+        <span class="spinner-border spinner-border-sm text-primary"></span>
+      } @else {
+        <i class="bi bi-search text-muted"></i>
+      }
+    </span>
+
+    <input
+      type="search"
+      class="form-control border-start-0 ps-0"
+      [placeholder]="placeholder()"
+      [(ngModel)]="searchTerm"
+      (ngModelChange)="onInputChange($event)"
+      [attr.aria-label]="ariaLabel() || 'Search'"
+      autocomplete="off" />
+
+    @if (searchTerm) {
+      <button
+        type="button"
+        class="btn btn-link text-secondary px-2"
+        (click)="clear()"
+        [attr.aria-label]="'Clear search'">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    }
+  </div>
+
+  @if (showResultCount() && resultCount() !== null) {
+    <small class="text-muted mt-1 d-block">
+      {{ resultCount() }} {{ resultCount() === 1 ? 'result' : 'results' }}
+    </small>
+  }
+</div>

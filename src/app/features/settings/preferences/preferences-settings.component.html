@@ -1,0 +1,172 @@
+<div class="container-fluid py-2">
+
+  <h5 class="fw-bold mb-1">Preferences</h5>
+  <p class="text-muted small mb-4">Customize your application experience</p>
+
+  <!-- Success Alert -->
+  @if (saveSuccess()) {
+    <div class="alert alert-success alert-dismissible fade show">
+      <i class="bi bi-check-circle-fill me-2"></i>
+      Preferences saved successfully!
+      <button type="button" class="btn-close" (click)="saveSuccess.set(false)"></button>
+    </div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+    <!-- Language & Region Card -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom">
+        <h6 class="mb-0 fw-semibold">
+          <i class="bi bi-globe me-2 text-primary"></i>Language & Region
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small">Language</label>
+            <select class="form-select" formControlName="language"
+              [class.is-invalid]="isInvalid('language')">
+              @for (lang of languages; track lang.value) {
+                <option [value]="lang.value">{{ lang.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small">Timezone</label>
+            <select class="form-select" formControlName="timezone"
+              [class.is-invalid]="isInvalid('timezone')">
+              @for (tz of timezones; track tz.value) {
+                <option [value]="tz.value">{{ tz.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small">Date Format</label>
+            <select class="form-select" formControlName="dateFormat"
+              [class.is-invalid]="isInvalid('dateFormat')">
+              @for (fmt of dateFormats; track fmt.value) {
+                <option [value]="fmt.value">{{ fmt.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small">Time Format</label>
+            <select class="form-select" formControlName="timeFormat"
+              [class.is-invalid]="isInvalid('timeFormat')">
+              <option value="12h">12-hour (3:00 PM)</option>
+              <option value="24h">24-hour (15:00)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Appearance Card -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom">
+        <h6 class="mb-0 fw-semibold">
+          <i class="bi bi-palette me-2 text-primary"></i>Appearance
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small">Theme</label>
+            <select class="form-select" formControlName="theme">
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+              <option value="auto">Auto (system preference)</option>
+            </select>
+            <small class="form-text text-muted">Choose your color theme</small>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small">Items Per Page</label>
+            <input type="number" class="form-control" formControlName="itemsPerPage"
+              [class.is-invalid]="isInvalid('itemsPerPage')"
+              min="10" max="100">
+            <small class="form-text text-muted">Number of items to display in lists (10-100)</small>
+            @if (isInvalid('itemsPerPage')) {
+              <div class="invalid-feedback">Value must be between 10 and 100</div>
+            }
+          </div>
+
+          <div class="col-12">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" formControlName="compactView" id="compactView">
+              <label class="form-check-label fw-semibold small" for="compactView">
+                Compact View
+              </label>
+              <div class="text-muted small">Reduce spacing for denser information display</div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" formControlName="showAvatars" id="showAvatars">
+              <label class="form-check-label fw-semibold small" for="showAvatars">
+                Show Avatars
+              </label>
+              <div class="text-muted small">Display user profile pictures throughout the app</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications Card -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom">
+        <h6 class="mb-0 fw-semibold">
+          <i class="bi bi-bell me-2 text-primary"></i>Notifications
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-12">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" formControlName="enableNotifications" id="enableNotifications">
+              <label class="form-check-label fw-semibold small" for="enableNotifications">
+                Enable Notifications
+              </label>
+              <div class="text-muted small">Receive in-app notifications for important updates</div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small">Email Digest</label>
+            <select class="form-select" formControlName="emailDigest">
+              <option value="daily">Daily Summary</option>
+              <option value="weekly">Weekly Summary</option>
+              <option value="never">Never</option>
+            </select>
+            <small class="form-text text-muted">Receive email summaries of your activity</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="d-flex gap-2 justify-content-end">
+      <button type="button" class="btn btn-outline-secondary" (click)="onResetDefaults()"
+        [disabled]="saving()">
+        <i class="bi bi-arrow-counterclockwise me-1"></i> Reset to Defaults
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="saving() || form.invalid">
+        @if (saving()) {
+          <span class="spinner-border spinner-border-sm me-2"></span>
+          Saving...
+        } @else {
+          <i class="bi bi-check-circle me-1"></i>
+          Save Preferences
+        }
+      </button>
+    </div>
+
+  </form>
+
+</div>

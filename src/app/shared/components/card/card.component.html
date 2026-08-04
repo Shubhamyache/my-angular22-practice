@@ -1,0 +1,27 @@
+<div
+  class="card"
+  [class.border-0]="!showBorder()"
+  [class.card-hoverable]="hoverable()"
+  [class]="shadowClass() + (borderColor() ? ' border-' + borderColor() : '')"
+  [style.max-width]="maxWidth()">
+
+  <!-- HEADER SLOT: Optional card header -->
+  @if (hasHeaderContent()) {
+    <div class="card-header bg-white border-bottom">
+      <ng-content select="[card-header]" />
+    </div>
+  }
+
+  <!-- BODY SLOT: Main card content (default slot) -->
+  <div class="card-body" [class]="'p-' + padding()">
+    <ng-content />
+  </div>
+
+  <!-- FOOTER SLOT: Optional card footer -->
+  @if (hasFooterContent()) {
+    <div class="card-footer bg-white border-top">
+      <ng-content select="[card-footer]" />
+    </div>
+  }
+
+</div>

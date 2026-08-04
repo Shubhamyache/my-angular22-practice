@@ -1,0 +1,93 @@
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+
+  <!-- Page size selector -->
+  <div class="d-flex align-items-center gap-2">
+    <label for="pageSize" class="form-label mb-0 small text-muted">
+      Items per page:
+    </label>
+    <select
+      id="pageSize"
+      class="form-select form-select-sm"
+      style="width: auto;"
+      [ngModel]="pageSize()"
+      (ngModelChange)="onPageSizeChange($event)">
+      @for (size of pageSizeOptions(); track size) {
+        <option [value]="size">{{ size }}</option>
+      }
+    </select>
+  </div>
+
+  <!-- Pagination info -->
+  <div class="text-muted small">
+    Showing {{ startItem() }} to {{ endItem() }} of {{ totalItems() }} items
+  </div>
+
+  <!-- Page navigation -->
+  <nav aria-label="Pagination">
+    <ul class="pagination pagination-sm mb-0">
+
+      <!-- Previous button -->
+      <li class="page-item" [class.disabled]="currentPage() === 1">
+        <button
+          class="page-link"
+          (click)="goToPage(currentPage() - 1)"
+          [disabled]="currentPage() === 1"
+          [attr.aria-label]="'Previous page'">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+      </li>
+
+      <!-- First page -->
+      @if (shouldShowFirst()) {
+        <li class="page-item">
+          <button class="page-link" (click)="goToPage(1)">1</button>
+        </li>
+        @if (shouldShowFirstEllipsis()) {
+          <li class="page-item disabled">
+            <span class="page-link">...</span>
+          </li>
+        }
+      }
+
+      <!-- Page numbers -->
+      @for (page of visiblePages(); track page) {
+        <li class="page-item" [class.active]="page === currentPage()">
+          <button
+            class="page-link"
+            (click)="goToPage(page)"
+            [attr.aria-label]="'Page ' + page"
+            [attr.aria-current]="page === currentPage() ? 'page' : null">
+            {{ page }}
+          </button>
+        </li>
+      }
+
+      <!-- Last page -->
+      @if (shouldShowLast()) {
+        @if (shouldShowLastEllipsis()) {
+          <li class="page-item disabled">
+            <span class="page-link">...</span>
+          </li>
+        }
+        <li class="page-item">
+          <button class="page-link" (click)="goToPage(totalPages())">
+            {{ totalPages() }}
+          </button>
+        </li>
+      }
+
+      <!-- Next button -->
+      <li class="page-item" [class.disabled]="currentPage() === totalPages()">
+        <button
+          class="page-link"
+          (click)="goToPage(currentPage() + 1)"
+          [disabled]="currentPage() === totalPages()"
+          [attr.aria-label]="'Next page'">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </li>
+
+    </ul>
+  </nav>
+
+</div>

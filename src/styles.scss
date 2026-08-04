@@ -1,1 +1,190 @@
-/* You can add global styles to this file, and also import other style files */
+// ─── 1. Bootstrap 5 Variable Overrides ───────────────────────────────────────
+//     Must come BEFORE bootstrap import so bootstrap picks them up.
+@use 'styles/variables' as *;
+
+// ─── 2. Bootstrap 5 Core ─────────────────────────────────────────────────────
+@use 'bootstrap/scss/bootstrap';
+
+// ─── 3. Custom Mixins ────────────────────────────────────────────────────────
+@use 'styles/mixins' as *;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  SHELL LAYOUT
+//  Three-zone flex layout: Navbar | (Sidebar + Content) | Footer
+//  The key constraint: only the content zone scrolls; everything else is fixed.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * .ems-layout
+ * Root wrapper.
+ * height:100vh + overflow:hidden = the viewport is the scrollable unit.
+ */
+.ems-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/**
+ * .ems-body
+ * The horizontal flex row that holds sidebar + content.
+ * min-height:0 is required so flex children can shrink below their intrinsic size.
+ * Without it, overflow:hidden on children won't work in Firefox/Chrome.
+ */
+.ems-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;   // ← critical for nested flex overflow
+  overflow: hidden;
+  position: relative;
+}
+
+/**
+ * .ems-content
+ * The only element that scrolls.
+ * flex:1 means it fills all remaining horizontal space left by the sidebar.
+ */
+.ems-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background-color: #f4f6f9;
+  min-width: 0; // prevent content from pushing layout on narrow screens
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  SIDEBAR — Desktop behavior
+//  Part of the normal flex flow. Width controlled by .sidebar-collapsed class.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+.sidebar {
+  background: #1a1d23;
+  width: 250px;
+  min-width: 250px;
+  // Smooth width collapse (desktop) and translate (mobile) in one transition
+  transition:
+    width       0.25s ease,
+    min-width   0.25s ease,
+    transform   0.3s ease;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/** Desktop collapsed: icon-only strip */
+.sidebar-collapsed {
+  width: 64px;
+  min-width: 64px;
+}
+
+// ─── Sidebar header label ─────────────────────────────────────────────────────
+.sidebar-section-label {
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+}
+
+// ─── Nav link base styles ─────────────────────────────────────────────────────
+.sidebar-nav-link {
+  padding: 0.55rem 0.6rem;
+  color: rgba(255, 255, 255, 0.6);
+  transition: background-color 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.07);
+    color: #fff;
+  }
+
+  &.active {
+    background-color: var(--bs-primary) !important;
+    color: #fff !important;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  SIDEBAR — Mobile behavior (< 992px Bootstrap lg breakpoint)
+//  The sidebar leaves the flex flow and becomes a fixed overlay.
+//  It is translated off-screen by default and slides in on open.
+// ═══════════════════════════════════════════════════════════════════════════════
+@media (max-width: 991.98px) {
+  .sidebar {
+    position: fixed;
+    top: 56px;   // sit below the 56px navbar
+    left: 0;
+    bottom: 0;
+    z-index: 1025;
+    width: 250px !important;       // always full width on mobile
+    min-width: 250px !important;
+    transform: translateX(-100%);  // hidden off-screen by default
+  }
+
+  /** Applied when isOpen() && isMobile() → slide in */
+  .sidebar-mobile-open {
+    transform: translateX(0) !important;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  MOBILE BACKDROP OVERLAY
+//  Semi-transparent scrim rendered by ShellComponent when sidebar is open
+//  on mobile. Clicking it fires closeOverlay() to dismiss the sidebar.
+// ═══════════════════════════════════════════════════════════════════════════════
+.sidebar-overlay {
+  position: fixed;
+  inset: 56px 0 0 0;  // top: 56px (below navbar), full width & height below
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 1020;      // below sidebar (1025) but above content
+  cursor: pointer;
+  animation: overlayFadeIn 0.2s ease forwards;
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  NAVBAR — Search input theming
+// ═══════════════════════════════════════════════════════════════════════════════
+.navbar-search-addon {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.navbar-search-input {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #fff;
+
+  &::placeholder { color: rgba(255, 255, 255, 0.4); }
+  &:focus {
+    background-color: rgba(255, 255, 255, 0.12);
+    border-color: var(--bs-primary);
+    color: #fff;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+  }
+}
+
+.navbar-search-close {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.6);
+  &:hover { color: #fff; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  CARD — Hover lift effect (applied globally via the mixin)
+// ═══════════════════════════════════════════════════════════════════════════════
+.card {
+  @include card-hover;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  SCROLLBAR — Thin custom scrollbar for WebKit browsers
+// ═══════════════════════════════════════════════════════════════════════════════
+::-webkit-scrollbar       { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #999; }
+

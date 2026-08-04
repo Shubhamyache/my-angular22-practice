@@ -1,0 +1,15 @@
+<button
+  [type]="type()"
+  [class]="'btn btn-' + variant() + ' ' + sizeClass"
+  [disabled]="disabled() || loading()"
+  (click)="onClick()">
+  @if (loading()) {
+    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+    Loading...
+  } @else {
+    @if (icon()) {
+      <i [class]="'bi ' + icon() + ' me-1'"></i>
+    }
+    {{ label() }}
+  }
+</button>
