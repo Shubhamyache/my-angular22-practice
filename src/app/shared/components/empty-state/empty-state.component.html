@@ -1,0 +1,61 @@
+<div class="empty-state text-center" [class]="'py-' + padding()">
+
+  <!-- Icon/Illustration -->
+  @if (icon()) {
+    <div class="empty-state-icon mb-3">
+      <i [class]="iconClass()"></i>
+    </div>
+  }
+
+  @if (illustration()) {
+    <div class="empty-state-illustration mb-4">
+      <img [src]="illustration()" [alt]="title()" class="img-fluid" style="max-width: 200px;" />
+    </div>
+  }
+
+  <!-- Title -->
+  <h4 class="fw-bold mb-2" [class]="titleColor()">{{ title() }}</h4>
+
+  <!-- Message -->
+  <p class="text-muted mb-4" [style.max-width.px]="maxMessageWidth()">
+    {{ message() }}
+  </p>
+
+  <!-- Actions -->
+  @if (actionText()) {
+    <button
+      type="button"
+      [class]="'btn btn-' + actionStyle()"
+      (click)="onAction()">
+      @if (actionIcon()) {
+        <i [class]="'bi ' + actionIcon() + ' me-2'"></i>
+      }
+      {{ actionText() }}
+    </button>
+  }
+
+  @if (secondaryActionText()) {
+    <button
+      type="button"
+      class="btn btn-outline-secondary ms-2"
+      (click)="onSecondaryAction()">
+      {{ secondaryActionText() }}
+    </button>
+  }
+
+  <!-- Help link -->
+  @if (helpText() && helpLink()) {
+    <div class="mt-4">
+      <a [href]="helpLink()" class="text-muted small text-decoration-none" target="_blank">
+        <i class="bi bi-question-circle me-1"></i>
+        {{ helpText() }}
+      </a>
+    </div>
+  }
+
+  <!-- Content Projection: Custom content -->
+  <div class="mt-4">
+    <ng-content />
+  </div>
+
+</div>

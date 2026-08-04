@@ -1,0 +1,57 @@
+<div class="form-group" [class.mb-3]="!noMargin()">
+  @if (label()) {
+    <label class="form-label fw-semibold small">
+      {{ label() }}
+      @if (required()) {
+        <span class="text-danger ms-1">*</span>
+      }
+    </label>
+  }
+
+  <div class="input-group" [class.is-invalid]="showError()">
+    <!-- PREFIX: Content projection for icons/text before input -->
+    <ng-content select="[prefix]" />
+
+    <input
+      [type]="type()"
+      class="form-control"
+      [class.is-invalid]="showError()"
+      [placeholder]="placeholder()"
+      [disabled]="disabled()"
+      [readonly]="readonlyInput()"
+      [attr.min]="min() ?? null"
+      [attr.max]="max() ?? null"
+      [attr.maxlength]="maxlength() ?? null"
+      [attr.aria-label]="ariaLabel() || label()"
+      [attr.aria-describedby]="errorId"
+      [(ngModel)]="value"
+      (ngModelChange)="onValueChange($event)"
+      (blur)="onTouched()" />
+
+    <!-- SUFFIX: Content projection for icons/buttons after input -->
+    <ng-content select="[suffix]" />
+
+    @if (clearable() && value) {
+      <button
+        type="button"
+        class="btn btn-outline-secondary"
+        (click)="clear()"
+        [attr.aria-label]="'Clear ' + (label() || 'input')">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    }
+  </div>
+
+  <!-- ERROR MESSAGE -->
+  @if (showError() && errorMessage()) {
+    <div [id]="errorId" class="invalid-feedback d-block">
+      <i class="bi bi-exclamation-circle me-1"></i>
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <!-- HINT TEXT -->
+  @if (hint() && !showError()) {
+    <small class="form-text text-muted">{{ hint() }}</small>
+  }
+</div>

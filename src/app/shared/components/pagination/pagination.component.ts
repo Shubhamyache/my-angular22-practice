@@ -26,165 +26,56 @@
  *   (pageSizeChange)="onPageSizeChange($event)" />
  */
 
-import { Component, Input, Output, EventEmitter, computed, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-pagination',
   standalone: true,
-  imports: [CommonModule, FormsModule],
-  template: `
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-      
-      <!-- Page size selector -->
-      <div class="d-flex align-items-center gap-2">
-        <label for="pageSize" class="form-label mb-0 small text-muted">
-          Items per page:
-        </label>
-        <select
-          id="pageSize"
-          class="form-select form-select-sm"
-          style="width: auto;"
-          [ngModel]="pageSize"
-          (ngModelChange)="onPageSizeChange($event)">
-          @for (size of pageSizeOptions; track size) {
-            <option [value]="size">{{ size }}</option>
-          }
-        </select>
-      </div>
-
-      <!-- Pagination info -->
-      <div class="text-muted small">
-        Showing {{ startItem() }} to {{ endItem() }} of {{ totalItems }} items
-      </div>
-
-      <!-- Page navigation -->
-      <nav aria-label="Pagination">
-        <ul class="pagination pagination-sm mb-0">
-          
-          <!-- Previous button -->
-          <li class="page-item" [class.disabled]="currentPage === 1">
-            <button
-              class="page-link"
-              (click)="goToPage(currentPage - 1)"
-              [disabled]="currentPage === 1"
-              [attr.aria-label]="'Previous page'">
-              <i class="bi bi-chevron-left"></i>
-            </button>
-          </li>
-
-          <!-- First page -->
-          @if (shouldShowFirst()) {
-            <li class="page-item">
-              <button class="page-link" (click)="goToPage(1)">1</button>
-            </li>
-            @if (shouldShowFirstEllipsis()) {
-              <li class="page-item disabled">
-                <span class="page-link">...</span>
-              </li>
-            }
-          }
-
-          <!-- Page numbers -->
-          @for (page of visiblePages(); track page) {
-            <li class="page-item" [class.active]="page === currentPage">
-              <button
-                class="page-link"
-                (click)="goToPage(page)"
-                [attr.aria-label]="'Page ' + page"
-                [attr.aria-current]="page === currentPage ? 'page' : null">
-                {{ page }}
-              </button>
-            </li>
-          }
-
-          <!-- Last page -->
-          @if (shouldShowLast()) {
-            @if (shouldShowLastEllipsis()) {
-              <li class="page-item disabled">
-                <span class="page-link">...</span>
-              </li>
-            }
-            <li class="page-item">
-              <button class="page-link" (click)="goToPage(totalPages())">
-                {{ totalPages() }}
-              </button>
-            </li>
-          }
-
-          <!-- Next button -->
-          <li class="page-item" [class.disabled]="currentPage === totalPages()">
-            <button
-              class="page-link"
-              (click)="goToPage(currentPage + 1)"
-              [disabled]="currentPage === totalPages()"
-              [attr.aria-label]="'Next page'">
-              <i class="bi bi-chevron-right"></i>
-            </button>
-          </li>
-
-        </ul>
-      </nav>
-
-    </div>
-  `,
-  styles: [`
-    :host {
-      display: block;
-      padding: 1rem 0;
-    }
-
-    .page-link {
-      min-width: 32px;
-      text-align: center;
-    }
-
-    .page-item.active .page-link {
-      background-color: #0d6efd;
-      border-color: #0d6efd;
-    }
-  `]
+  imports: [FormsModule],
+  templateUrl: './pagination.component.html',
+  styleUrl: './pagination.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PaginationComponent {
   // ════════════════════════════════════════════════════════════════
   // INPUTS: Configuration from parent
   // ════════════════════════════════════════════════════════════════
-  @Input() currentPage = 1;
-  @Input() totalItems = 0;
-  @Input() pageSize = 20;
-  @Input() maxPages = 7; // Maximum page buttons to show
-  @Input() pageSizeOptions = [10, 20, 50, 100];
+  readonly currentPage = input(1);
+  readonly totalItems = input(0);
+  readonly pageSize = input(20);
+  readonly maxPages = input(7); // Maximum page buttons to show
+  readonly pageSizeOptions = input([10, 20, 50, 100]);
 
   // ════════════════════════════════════════════════════════════════
   // OUTPUTS: Events emitted to parent
   // ════════════════════════════════════════════════════════════════
-  @Output() pageChange = new EventEmitter<number>();
-  @Output() pageSizeChange = new EventEmitter<number>();
+  readonly pageChange = output<number>();
+  readonly pageSizeChange = output<number>();
 
   // ════════════════════════════════════════════════════════════════
   // COMPUTED SIGNALS: Derived reactive state
   // ════════════════════════════════════════════════════════════════
-  
+
   /**
    * COMPUTED: Total number of pages
    */
   protected readonly totalPages = computed(() => {
-    return Math.ceil(this.totalItems / this.pageSize) || 1;
+    return Math.ceil(this.totalItems() / this.pageSize()) || 1;
   });
 
   /**
    * COMPUTED: Start item number
    */
   protected readonly startItem = computed(() => {
-    return ((this.currentPage - 1) * this.pageSize) + 1;
+    return ((this.currentPage() - 1) * this.pageSize()) + 1;
   });
 
   /**
    * COMPUTED: End item number
    */
   protected readonly endItem = computed(() => {
-    return Math.min(this.currentPage * this.pageSize, this.totalItems);
+    return Math.min(this.currentPage() * this.pageSize(), this.totalItems());
   });
 
   /**
@@ -193,8 +84,8 @@ export class PaginationComponent {
    */
   protected readonly visiblePages = computed(() => {
     const total = this.totalPages();
-    const current = this.currentPage;
-    const max = this.maxPages;
+    const current = this.currentPage();
+    const max = this.maxPages();
 
     // If total pages fit in max, show all
     if (total <= max) {
@@ -224,7 +115,7 @@ export class PaginationComponent {
   // ════════════════════════════════════════════════════════════════
   // HELPER METHODS: UI logic
   // ════════════════════════════════════════════════════════════════
-  
+
   protected shouldShowFirst(): boolean {
     return !this.visiblePages().includes(1);
   }
@@ -247,7 +138,7 @@ export class PaginationComponent {
   // ════════════════════════════════════════════════════════════════
 
   goToPage(page: number): void {
-    if (page < 1 || page > this.totalPages() || page === this.currentPage) {
+    if (page < 1 || page > this.totalPages() || page === this.currentPage()) {
       return;
     }
     this.pageChange.emit(page);

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 interface SettingsTab {
@@ -10,6 +10,7 @@ interface SettingsTab {
 @Component({
   selector: 'app-settings-shell',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterModule],
   templateUrl: './settings-shell.component.html'
 })

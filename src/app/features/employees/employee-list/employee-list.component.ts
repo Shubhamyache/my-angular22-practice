@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { EmployeeStore } from '../store/employee.store';
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
@@ -6,6 +6,7 @@ import { LoaderComponent } from '../../../shared/components/loader/loader.compon
 @Component({
   selector: 'app-employee-list',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterModule, LoaderComponent],
   templateUrl: './employee-list.component.html'
 })

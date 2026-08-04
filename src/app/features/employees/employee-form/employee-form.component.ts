@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { EmployeeService } from '../services/employee.service';
@@ -8,6 +8,7 @@ import { CreateEmployeeDto } from '../models/employee.model';
 @Component({
   selector: 'app-employee-form',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, RouterModule],
   templateUrl: './employee-form.component.html'
 })

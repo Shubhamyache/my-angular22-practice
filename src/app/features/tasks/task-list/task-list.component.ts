@@ -4,7 +4,7 @@
  * ═══════════════════════════════════════════════════════════════════
  */
 
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TaskStore } from '../store/task.store';
@@ -15,6 +15,7 @@ import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 @Component({
   selector: 'app-task-list',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     RouterModule,
     FormsModule,

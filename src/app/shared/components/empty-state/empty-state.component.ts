@@ -8,14 +8,6 @@
  * Empty states are critical for UX. Instead of showing a blank screen,
  * guide users toward the next action.
  *
- * WHY EMPTY STATES MATTER:
- * ────────────────────────
- * - Reduces user confusion ("Is it broken?")
- * - Guides users to first action
- * - Improves onboarding experience
- * - Provides context for filtered/searched results
- * - Makes app feel polished and intentional
- *
  * DESIGN PRINCIPLES:
  * ──────────────────
  * 1. Visual clarity (icon, illustration)
@@ -42,130 +34,50 @@
  *   (action)="clearFilters()" />
  */
 
-import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
 @Component({
   selector: 'app-empty-state',
   standalone: true,
-  imports: [CommonModule],
-  template: `
-    <div class="empty-state text-center" [class]="'py-' + padding">
-      
-      <!-- Icon/Illustration -->
-      @if (icon) {
-        <div class="empty-state-icon mb-3">
-          <i [class]="'bi ' + icon + ' ' + iconColor" [class]="'display-' + iconSize"></i>
-        </div>
-      }
-
-      @if (illustration) {
-        <div class="empty-state-illustration mb-4">
-          <img [src]="illustration" [alt]="title" class="img-fluid" style="max-width: 200px;" />
-        </div>
-      }
-
-      <!-- Title -->
-      <h4 class="fw-bold mb-2" [class]="titleColor">{{ title }}</h4>
-
-      <!-- Message -->
-      <p class="text-muted mb-4" [style.max-width.px]="maxMessageWidth">
-        {{ message }}
-      </p>
-
-      <!-- Actions -->
-      @if (actionText) {
-        <button
-          type="button"
-          [class]="'btn btn-' + actionStyle"
-          (click)="onAction()">
-          @if (actionIcon) {
-            <i [class]="'bi ' + actionIcon + ' me-2'"></i>
-          }
-          {{ actionText }}
-        </button>
-      }
-
-      @if (secondaryActionText) {
-        <button
-          type="button"
-          class="btn btn-outline-secondary ms-2"
-          (click)="onSecondaryAction()">
-          {{ secondaryActionText }}
-        </button>
-      }
-
-      <!-- Help link -->
-      @if (helpText && helpLink) {
-        <div class="mt-4">
-          <a [href]="helpLink" class="text-muted small text-decoration-none" target="_blank">
-            <i class="bi bi-question-circle me-1"></i>
-            {{ helpText }}
-          </a>
-        </div>
-      }
-
-      <!-- Content Projection: Custom content -->
-      <div class="mt-4">
-        <ng-content />
-      </div>
-
-    </div>
-  `,
-  styles: [`
-    .empty-state {
-      min-height: 300px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .empty-state-icon {
-      opacity: 0.5;
-    }
-
-    .empty-state-illustration {
-      opacity: 0.7;
-    }
-
-    p {
-      margin: 0 auto;
-    }
-  `]
+  templateUrl: './empty-state.component.html',
+  styleUrl: './empty-state.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EmptyStateComponent {
   // ════════════════════════════════════════════════════════════════
   // CONFIGURATION INPUTS
   // ════════════════════════════════════════════════════════════════
-  
-  @Input() icon = 'bi-inbox'; // Bootstrap icon class
-  @Input() iconSize: 1 | 2 | 3 | 4 = 1;
-  @Input() iconColor = 'text-muted';
-  @Input() illustration?: string; // Image URL
-  
-  @Input() title = 'No items found';
-  @Input() titleColor = 'text-dark';
-  @Input() message = 'Get started by creating a new item';
-  @Input() maxMessageWidth = 500;
-  
-  @Input() actionText?: string;
-  @Input() actionIcon?: string;
-  @Input() actionStyle: 'primary' | 'success' | 'info' = 'primary';
-  
-  @Input() secondaryActionText?: string;
-  
-  @Input() helpText?: string;
-  @Input() helpLink?: string;
-  
-  @Input() padding: 3 | 4 | 5 = 5;
+  readonly icon = input('bi-inbox'); // Bootstrap icon class
+  readonly iconSize = input<1 | 2 | 3 | 4>(1);
+  readonly iconColor = input('text-muted');
+  readonly illustration = input<string>(); // Image URL
+
+  readonly title = input('No items found');
+  readonly titleColor = input('text-dark');
+  readonly message = input('Get started by creating a new item');
+  readonly maxMessageWidth = input(500);
+
+  readonly actionText = input<string>();
+  readonly actionIcon = input<string>();
+  readonly actionStyle = input<'primary' | 'success' | 'info'>('primary');
+
+  readonly secondaryActionText = input<string>();
+
+  readonly helpText = input<string>();
+  readonly helpLink = input<string>();
+
+  readonly padding = input<3 | 4 | 5>(5);
 
   // ════════════════════════════════════════════════════════════════
   // OUTPUTS: Events
   // ════════════════════════════════════════════════════════════════
-  
-  @Output() action = new EventEmitter<void>();
-  @Output() secondaryAction = new EventEmitter<void>();
+  readonly action = output<void>();
+  readonly secondaryAction = output<void>();
+
+  // ════════════════════════════════════════════════════════════════
+  // DERIVED STATE
+  // ════════════════════════════════════════════════════════════════
+  protected readonly iconClass = computed(() => `bi ${this.icon()} ${this.iconColor()} display-${this.iconSize()}`);
 
   // ════════════════════════════════════════════════════════════════
   // METHODS

@@ -11,19 +11,9 @@
  * KEY CONCEPTS:
  * ─────────────
  * 1. ControlValueAccessor: Makes component work with Angular Forms
- * 2. @Input() for configuration (type, placeholder, label, etc.)
- * 3. @Output() for events (value changes)
- * 4. Content Projection: <ng-content> for icons/addons
- * 5. Accessibility: ARIA labels, role attributes
- *
- * WHY REUSABLE INPUTS?
- * ────────────────────
- * - Consistent styling across application
- * - Centralized validation display logic
- * - Easier to maintain (change once, update everywhere)
- * - Built-in accessibility features
- * - Reduces code duplication
- * - Type-safe with generics
+ * 2. Signal input() for configuration (type, placeholder, label, etc.)
+ * 3. Content Projection: <ng-content> for icons/addons
+ * 4. Accessibility: ARIA labels, role attributes
  *
  * USAGE EXAMPLES:
  * ───────────────
@@ -48,14 +38,13 @@
  *   errorMessage="Age must be between 18 and 100" />
  */
 
-import { Component, Input, forwardRef, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, input, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-input',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -63,111 +52,45 @@ import { CommonModule } from '@angular/common';
       multi: true
     }
   ],
-  template: `
-    <div class="form-group" [class.mb-3]="!noMargin">
-      @if (label) {
-        <label class="form-label fw-semibold small">
-          {{ label }}
-          @if (required) {
-            <span class="text-danger ms-1">*</span>
-          }
-        </label>
-      }
-
-      <div class="input-group" [class.is-invalid]="showError()">
-        <!-- PREFIX: Content projection for icons/text before input -->
-        <ng-content select="[prefix]" />
-
-        <input
-          [type]="type"
-          class="form-control"
-          [class.is-invalid]="showError()"
-          [placeholder]="placeholder"
-          [disabled]="disabled()"
-          [readonly]="readonly"
-          [attr.min]="min ?? null"
-          [attr.max]="max ?? null"
-          [attr.maxlength]="maxlength ?? null"
-          [attr.aria-label]="ariaLabel || label"
-          [attr.aria-describedby]="errorId"
-          [(ngModel)]="value"
-          (ngModelChange)="onValueChange($event)"
-          (blur)="onTouched()" />
-
-        <!-- SUFFIX: Content projection for icons/buttons after input -->
-        <ng-content select="[suffix]" />
-
-        @if (clearable && value) {
-          <button
-            type="button"
-            class="btn btn-outline-secondary"
-            (click)="clear()"
-            [attr.aria-label]="'Clear ' + (label || 'input')">
-            <i class="bi bi-x-lg"></i>
-          </button>
-        }
-      </div>
-
-      <!-- ERROR MESSAGE -->
-      @if (showError() && errorMessage) {
-        <div [id]="errorId" class="invalid-feedback d-block">
-          <i class="bi bi-exclamation-circle me-1"></i>
-          {{ errorMessage }}
-        </div>
-      }
-
-      <!-- HINT TEXT -->
-      @if (hint && !showError()) {
-        <small class="form-text text-muted">{{ hint }}</small>
-      }
-    </div>
-  `,
-  styles: [`
-    :host {
-      display: block;
-    }
-    
-    .input-group:focus-within {
-      box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-      border-radius: 0.375rem;
-    }
-  `]
+  templateUrl: './input.component.html',
+  styleUrl: './input.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class InputComponent implements ControlValueAccessor {
   // ════════════════════════════════════════════════════════════════
   // CONFIGURATION INPUTS
   // ════════════════════════════════════════════════════════════════
-  @Input() label = '';
-  @Input() placeholder = '';
-  @Input() type: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search' = 'text';
-  @Input() errorMessage = '';
-  @Input() hint = '';
-  @Input() required = false;
-  @Input() readonly = false;
-  @Input() clearable = false;
-  @Input() noMargin = false;
-  
+  readonly label = input('');
+  readonly placeholder = input('');
+  readonly type = input<'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search'>('text');
+  readonly errorMessage = input('');
+  readonly hint = input('');
+  readonly required = input(false);
+  readonly readonlyInput = input(false, { alias: 'readonly' });
+  readonly clearable = input(false);
+  readonly noMargin = input(false);
+
   // HTML5 validation attributes
-  @Input() min?: number | null = null;
-  @Input() max?: number | null = null;
-  @Input() maxlength?: number | null = null;
-  
+  readonly min = input<number | null>(null);
+  readonly max = input<number | null>(null);
+  readonly maxlength = input<number | null>(null);
+
   // Accessibility
-  @Input() ariaLabel = '';
+  readonly ariaLabel = input('');
 
   // ════════════════════════════════════════════════════════════════
   // SIGNALS FOR REACTIVE STATE
   // ════════════════════════════════════════════════════════════════
   protected readonly disabled = signal(false);
   protected readonly showError = signal(false);
-  
+
   protected readonly errorId = `input-error-${Math.random().toString(36).substr(2, 9)}`;
 
   // ════════════════════════════════════════════════════════════════
   // CONTROL VALUE ACCESSOR IMPLEMENTATION
   // ════════════════════════════════════════════════════════════════
   value = '';
-  
+
   private onChange: (value: string) => void = () => {};
   onTouched: () => void = () => {};
 

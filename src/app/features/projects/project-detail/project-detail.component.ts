@@ -23,7 +23,7 @@
  * - paramMap.subscribe(): For dynamic updates (if same component reused)
  */
 
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ProjectStore } from '../store/project.store';
 import { Project } from '../models/project.model';
@@ -34,6 +34,7 @@ import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 @Component({
   selector: 'app-project-detail',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     RouterModule,
     LoaderComponent,

@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { TaskService } from '../services/task.service';
 import { Task, TaskStatus } from '../models/task.model';
@@ -14,6 +14,7 @@ const COLUMNS: Array<{ status: TaskStatus; label: string; icon: string; color: s
 @Component({
   selector: 'app-task-board',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterModule, LoaderComponent],
   templateUrl: './task-board.component.html'
 })

@@ -8,15 +8,6 @@
  * Instead of using browser's confirm(), this provides a branded,
  * accessible, customizable confirmation dialog.
  *
- * WHY CUSTOM DIALOGS?
- * ───────────────────
- * - Browser confirm() blocks JavaScript execution
- * - Cannot style native dialogs
- * - Better UX with animations, icons, colors
- * - Accessibility features (ARIA, focus management)
- * - Consistent branding across application
- * - Support for async operations (Promise-based API)
- *
  * USAGE WITH SERVICE:
  * ───────────────────
  * // Inject service
@@ -36,8 +27,7 @@
  * }
  */
 
-import { Component, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 
 export interface ConfirmDialogConfig {
   title: string;
@@ -52,106 +42,9 @@ export interface ConfirmDialogConfig {
 @Component({
   selector: 'app-confirm-dialog',
   standalone: true,
-  imports: [CommonModule],
-  template: `
-    @if (visible()) {
-      <!-- Backdrop -->
-      <div class="modal-backdrop fade show" (click)="onCancel()"></div>
-
-      <!-- Dialog -->
-      <div
-        class="modal fade show d-block"
-        tabindex="-1"
-        role="dialog"
-        [attr.aria-labelledby]="dialogId + '-title'"
-        [attr.aria-describedby]="dialogId + '-message'">
-        
-        <div class="modal-dialog modal-dialog-centered" role="document">
-          <div class="modal-content border-0 shadow-lg">
-            
-            <!-- Header -->
-            <div class="modal-header border-0 pb-0">
-              @if (config().icon) {
-                <div class="me-3">
-                  <i
-                    [class]="'bi ' + config().icon + ' fs-2 ' + (config().iconColor || 'text-warning')"
-                    aria-hidden="true"></i>
-                </div>
-              }
-              <h5 class="modal-title fw-bold flex-grow-1" [id]="dialogId + '-title'">
-                {{ config().title }}
-              </h5>
-              <button
-                type="button"
-                class="btn-close"
-                (click)="onCancel()"
-                [attr.aria-label]="'Close'"></button>
-            </div>
-
-            <!-- Body -->
-            <div class="modal-body">
-              <p [id]="dialogId + '-message'" class="mb-0">
-                {{ config().message }}
-              </p>
-            </div>
-
-            <!-- Footer -->
-            <div class="modal-footer border-0 pt-0">
-              <button
-                type="button"
-                class="btn btn-outline-secondary"
-                (click)="onCancel()"
-                [disabled]="processing()">
-                {{ config().cancelText || 'Cancel' }}
-              </button>
-              <button
-                type="button"
-                [class]="'btn ' + (config().confirmClass || 'btn-primary')"
-                (click)="onConfirm()"
-                [disabled]="processing()"
-                autofocus>
-                @if (processing()) {
-                  <span class="spinner-border spinner-border-sm me-2"></span>
-                  Processing...
-                } @else {
-                  {{ config().confirmText || 'Confirm' }}
-                }
-              </button>
-            </div>
-
-          </div>
-        </div>
-      </div>
-    }
-  `,
-  styles: [`
-    .modal {
-      background-color: rgba(0, 0, 0, 0.5);
-    }
-
-    .modal-backdrop {
-      opacity: 0.5;
-    }
-
-    .modal-dialog {
-      animation: slideDown 0.3s ease-out;
-    }
-
-    @keyframes slideDown {
-      from {
-        opacity: 0;
-        transform: translateY(-50px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .btn-close:focus {
-      box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-    }
-  `]
+  templateUrl: './confirm-dialog.component.html',
+  styleUrl: './confirm-dialog.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ConfirmDialogComponent {
   // ════════════════════════════════════════════════════════════════

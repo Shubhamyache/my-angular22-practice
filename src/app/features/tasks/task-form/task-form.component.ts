@@ -4,7 +4,7 @@
  * ═══════════════════════════════════════════════════════════════════
  */
 
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TaskService } from '../services/task.service';
@@ -14,6 +14,7 @@ import { CreateTaskDto, TaskPriority } from '../models/task.model';
 @Component({
   selector: 'app-task-form',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, RouterModule],
   templateUrl: './task-form.component.html'
 })

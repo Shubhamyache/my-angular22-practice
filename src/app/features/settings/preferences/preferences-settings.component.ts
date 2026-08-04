@@ -21,7 +21,7 @@
  * In real app, would also sync to backend.
  */
 
-import { Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 interface PreferencesForm {
@@ -40,6 +40,7 @@ interface PreferencesForm {
 @Component({
   selector: 'app-preferences-settings',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule],
   templateUrl: './preferences-settings.component.html'
 })

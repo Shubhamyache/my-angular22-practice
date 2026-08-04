@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { DatePipe }                 from '@angular/common';
 import { DashboardService }         from './services/dashboard.service';
 import { AuthService }              from '../../core/services/auth.service';
@@ -98,6 +98,7 @@ const QUICK_ACTIONS: QuickAction[] = [
     QuickActionsComponent,
   ],
   templateUrl: './dashboard.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardComponent {
 

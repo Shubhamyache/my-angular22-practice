@@ -22,7 +22,7 @@
  * just triggers the actions. Separation of concerns!
  */
 
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ProjectStore } from '../store/project.store';
@@ -34,6 +34,7 @@ import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 @Component({
   selector: 'app-project-list',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     RouterModule,
     FormsModule,

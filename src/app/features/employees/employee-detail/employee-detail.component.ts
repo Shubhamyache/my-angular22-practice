@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { EmployeeService } from '../services/employee.service';
 import { Employee } from '../models/employee.model';
@@ -9,6 +9,7 @@ import { CurrencyFormatPipe } from '../../../shared/pipes/currency-format.pipe';
 @Component({
   selector: 'app-employee-detail',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterModule, LoaderComponent, DateFormatPipe, CurrencyFormatPipe],
   templateUrl: './employee-detail.component.html'
 })

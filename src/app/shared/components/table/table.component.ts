@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 export interface TableColumn {
   key: string;
@@ -9,6 +9,7 @@ export interface TableColumn {
 @Component({
   selector: 'app-table',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './table.component.html'
 })
 export class TableComponent {

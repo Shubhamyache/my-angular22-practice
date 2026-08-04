@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 
 interface NotificationPref {
   id:      string;
@@ -11,51 +11,8 @@ interface NotificationPref {
 @Component({
   selector: 'app-notifications-settings',
   standalone: true,
-  template: `
-    <h5 class="fw-bold mb-1">Notification Preferences</h5>
-    <p class="text-muted small mb-4">Choose what you want to be notified about</p>
-
-    <div class="table-responsive">
-      <table class="table align-middle">
-        <thead class="table-light">
-          <tr>
-            <th>Event</th>
-            <th class="text-center">Email</th>
-            <th class="text-center">In-App</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (pref of prefs(); track pref.id) {
-            <tr>
-              <td>
-                <div class="fw-semibold small">{{ pref.label }}</div>
-                <small class="text-muted">{{ pref.detail }}</small>
-              </td>
-              <td class="text-center">
-                <div class="form-check d-flex justify-content-center">
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    [checked]="pref.email"
-                    (change)="toggle(pref.id, 'email')" />
-                </div>
-              </td>
-              <td class="text-center">
-                <div class="form-check d-flex justify-content-center">
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    [checked]="pref.inApp"
-                    (change)="toggle(pref.id, 'inApp')" />
-                </div>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-    <button class="btn btn-primary mt-2">Save Preferences</button>
-  `
+  templateUrl: './notifications-settings.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class NotificationsSettingsComponent {
   protected readonly prefs = signal<NotificationPref[]>([

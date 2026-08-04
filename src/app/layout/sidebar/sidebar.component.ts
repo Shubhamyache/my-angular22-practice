@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 interface NavItem {
@@ -16,6 +16,7 @@ interface NavGroup {
 @Component({
   selector: 'app-sidebar',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterModule],
   templateUrl: './sidebar.component.html'
 })
