@@ -37,10 +37,54 @@ export class TaskBoardComponent implements OnInit {
     return this.allTasks().filter(t => t.status === status);
   }
 
+  protected readonly movingId = signal<number | null>(null);
+
   ngOnInit(): void {
     this.taskService.getAll().subscribe({
       next: data => { this.allTasks.set(data); this.loading.set(false); },
       error: (err: Error) => { this.error.set(err.message); this.loading.set(false); }
+    });
+  }
+
+  /** The column immediately after `status`, or null for the last column ('Done'). */
+  protected nextStatus(status: TaskStatus): TaskStatus | null {
+    const index = COLUMNS.findIndex(c => c.status === status);
+    return index >= 0 && index < COLUMNS.length - 1 ? COLUMNS[index + 1].status : null;
+  }
+
+  /** The column immediately before `status`, or null for the first column ('Todo'). */
+  protected prevStatus(status: TaskStatus): TaskStatus | null {
+    const index = COLUMNS.findIndex(c => c.status === status);
+    return index > 0 ? COLUMNS[index - 1].status : null;
+  }
+
+  /**
+   * Moves a card to an adjacent column via PATCH /tasks/{id}/status (UIIntegrationInfo.md §4 —
+   * "the endpoint that backs Kanban drag-and-drop"). This board doesn't implement HTML5
+   * drag-and-drop (that's a bigger, separate UI addition — see FeaturesToImplement.md); these
+   * prev/next buttons drive the same lightweight endpoint. Optimistic update with rollback on
+   * error, same pattern the backend doc recommends for the drag-and-drop version.
+   */
+  moveTask(task: Task, newStatus: TaskStatus): void {
+    if (this.movingId() !== null) return;
+
+    const previousStatus = task.status;
+    this.movingId.set(task.id);
+    this.allTasks.update(list =>
+      list.map(t => t.id === task.id ? { ...t, status: newStatus } : t)
+    );
+
+    this.taskService.patchStatus(task.id, { status: newStatus }).subscribe({
+      next: updated => {
+        this.allTasks.update(list => list.map(t => t.id === updated.id ? updated : t));
+        this.movingId.set(null);
+      },
+      error: () => {
+        this.allTasks.update(list =>
+          list.map(t => t.id === task.id ? { ...t, status: previousStatus } : t)
+        );
+        this.movingId.set(null);
+      }
     });
   }
 }

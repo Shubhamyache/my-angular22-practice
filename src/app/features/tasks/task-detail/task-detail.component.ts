@@ -44,6 +44,7 @@ export class TaskDetailComponent implements OnInit {
   );
 
   private taskId = 0;
+  protected readonly loggingTime = signal(false);
 
   protected readonly statusConfig = {
     Todo:       { badge: 'bg-secondary',        label: 'To Do',       icon: 'bi-circle' },
@@ -95,5 +96,45 @@ export class TaskDetailComponent implements OnInit {
 
   onBack(): void {
     this.router.navigate(['/tasks']);
+  }
+
+  /**
+   * Logs additional hours against the task via PUT /tasks/{id} (UpdateTaskDto is the only
+   * endpoint that accepts loggedHours — there's no dedicated "log time" endpoint per
+   * UIIntegrationInfo.md §4, so this sends a full update built from the currently-loaded task
+   * plus the incremented value).
+   */
+  logTime(): void {
+    const t = this.task();
+    if (!t || this.loggingTime()) return;
+
+    const input = prompt('How many hours would you like to log?', '1');
+    if (input === null) return;
+
+    const hours = Number(input);
+    if (!Number.isFinite(hours) || hours <= 0) {
+      alert('Enter a positive number of hours.');
+      return;
+    }
+
+    this.loggingTime.set(true);
+    this.taskService.update(t.id, {
+      title: t.title,
+      description: t.description ?? undefined,
+      priority: t.priority,
+      projectId: t.projectId,
+      assigneeId: t.assigneeId,
+      dueDate: t.dueDate,
+      estimatedHours: t.estimatedHours,
+      tags: t.tags,
+      loggedHours: t.loggedHours + hours,
+      status: t.status
+    }).subscribe({
+      next: updated => {
+        this.store.updateTask(updated);
+        this.loggingTime.set(false);
+      },
+      error: () => this.loggingTime.set(false)
+    });
   }
 }

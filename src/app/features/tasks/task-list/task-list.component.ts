@@ -4,8 +4,8 @@
  * ═══════════════════════════════════════════════════════════════════
  */
 
-import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TaskStore } from '../store/task.store';
 import { TaskService } from '../services/task.service';
@@ -30,6 +30,15 @@ export class TaskListComponent implements OnInit {
   protected readonly store = inject(TaskStore);
   private readonly taskService = inject(TaskService);
   private readonly authService = inject(AuthService);
+  private readonly route       = inject(ActivatedRoute);
+  private readonly router      = inject(Router);
+
+  /** Set when navigated here via project-detail's "View Tasks" quick action
+   *  (?projectId=N) — reuses TaskStore.loadTasks(projectId) which already supports this. */
+  protected readonly projectFilterId = signal<number | null>(null);
+  /** Derived from the loaded tasks themselves (they carry projectName) rather than a second
+   *  fetch — good enough for a banner and avoids a second HTTP round trip. */
+  protected readonly projectFilterName = computed(() => this.store.tasks()[0]?.projectName ?? null);
 
   /** Create/edit/delete — Admin, Manager per §13 (HR is read-only on Tasks). Per-record
    *  "is this Manager's own project" ownership is enforced by the backend via 403, not
@@ -61,6 +70,18 @@ export class TaskListComponent implements OnInit {
   };
 
   ngOnInit(): void {
+    const projectId = Number(this.route.snapshot.queryParamMap.get('projectId')) || null;
+    if (projectId) {
+      this.projectFilterId.set(projectId);
+      this.store.loadTasks(projectId);
+    } else {
+      this.store.loadTasks();
+    }
+  }
+
+  clearProjectFilter(): void {
+    this.projectFilterId.set(null);
+    this.router.navigate(['/tasks']);
     this.store.loadTasks();
   }
 

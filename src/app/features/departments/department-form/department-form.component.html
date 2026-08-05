@@ -1,0 +1,107 @@
+<div class="container-fluid py-2">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-0">
+        <i class="bi bi-diagram-3-fill me-2 text-success"></i>
+        {{ isEditMode() ? 'Edit Department' : 'Create New Department' }}
+      </h2>
+      <small class="text-muted">{{ isEditMode() ? 'Update department information' : 'Fill in the details to create a new department' }}</small>
+    </div>
+    <button type="button" class="btn btn-outline-secondary" (click)="onCancel()">
+      <i class="bi bi-x-lg me-1"></i> Cancel
+    </button>
+  </div>
+
+  <!-- Error Alert -->
+  @if (error()) {
+    <div class="alert alert-danger alert-dismissible">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      {{ error() }}
+      <button type="button" class="btn-close" (click)="error.set(null)"></button>
+    </div>
+  }
+
+  <div class="row">
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+
+          <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+            <!-- Department Name -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold">
+                Department Name <span class="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                class="form-control"
+                formControlName="name"
+                [class.is-invalid]="isInvalid('name')"
+                placeholder="e.g., Engineering">
+              @if (isInvalid('name')) {
+                <div class="invalid-feedback">{{ getErrorMessage('name') }}</div>
+              }
+            </div>
+
+            <!-- Department Code -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold">
+                Department Code <span class="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                class="form-control"
+                formControlName="code"
+                [class.is-invalid]="isInvalid('code')"
+                placeholder="e.g., ENG">
+              <small class="form-text text-muted">Max 10 characters — the backend stores this uppercased regardless of what you type.</small>
+              @if (isInvalid('code')) {
+                <div class="invalid-feedback">{{ getErrorMessage('code') }}</div>
+              }
+            </div>
+
+            <!-- Manager -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Department Manager</label>
+              <select class="form-select" formControlName="managerId">
+                <option [value]="0">No manager assigned</option>
+                @for (mgr of managers(); track mgr.id) {
+                  <option [value]="mgr.id">{{ mgr.name }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2 justify-content-end mt-4">
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                (click)="onCancel()"
+                [disabled]="loading()">
+                <i class="bi bi-x-circle me-1"></i> Cancel
+              </button>
+              <button
+                type="submit"
+                class="btn btn-success"
+                [disabled]="loading() || form.invalid">
+                @if (loading()) {
+                  <span class="spinner-border spinner-border-sm me-2"></span>
+                  Saving...
+                } @else {
+                  <i class="bi bi-check-circle me-1"></i>
+                  {{ isEditMode() ? 'Update Department' : 'Create Department' }}
+                }
+              </button>
+            </div>
+
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

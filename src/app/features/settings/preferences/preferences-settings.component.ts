@@ -21,8 +21,10 @@
  * In real app, would also sync to backend.
  */
 
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { UserPreferencesService } from '../services/user-preferences.service';
+import { UserPreferencesDto } from '../models/settings.model';
 
 interface PreferencesForm {
   language: string;
@@ -44,11 +46,14 @@ interface PreferencesForm {
   imports: [ReactiveFormsModule],
   templateUrl: './preferences-settings.component.html'
 })
-export class PreferencesSettingsComponent {
+export class PreferencesSettingsComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
+  private readonly userPreferencesService = inject(UserPreferencesService);
 
   protected readonly saving = signal(false);
   protected readonly saveSuccess = signal(false);
+  /** True once GET /users/me/preferences is confirmed missing — see FeaturesToImplement.md §7. */
+  protected readonly backendMissing = signal(false);
 
   /**
    * REACTIVE FORM WITH TYPED CONTROLS
@@ -99,9 +104,35 @@ export class PreferencesSettingsComponent {
   ];
 
   /**
+   * Loads previously-saved preferences. Reads localStorage first (fixes a pre-existing gap —
+   * onSubmit wrote to localStorage but nothing ever read it back, so preferences never actually
+   * survived a page reload), then tries GET /users/me/preferences (§7 of
+   * FeaturesToImplement.md — doesn't exist yet) to override with the backend copy once it does.
+   */
+  ngOnInit(): void {
+    const stored = localStorage.getItem('userPreferences');
+    if (stored) {
+      try {
+        this.form.patchValue(JSON.parse(stored));
+      } catch {
+        // Corrupt/old-shape localStorage value — ignore and keep form defaults.
+      }
+    }
+
+    // The form is typed fb.group<any> (see class docblock) since it predates this backend
+    // integration pass, so patchValue()/getRawValue() below are cast at the boundary rather
+    // than fighting FormGroup<any>'s inferred `{[x: string]: unknown}` shape.
+    this.userPreferencesService.getPreferences().subscribe({
+      next: prefs => this.form.patchValue(prefs as unknown as Record<string, unknown>),
+      error: () => this.backendMissing.set(true)
+    });
+  }
+
+  /**
    * FORM SUBMISSION
    * ────────────────
-   * Validate, show loading spinner, simulate save, show success message
+   * Validate, show loading spinner, save to localStorage (always) and the backend (once it
+   * exists), show success message.
    */
   onSubmit(): void {
     if (this.form.invalid) {
@@ -112,20 +143,24 @@ export class PreferencesSettingsComponent {
     this.saving.set(true);
     this.saveSuccess.set(false);
 
-    // Simulate API call
-    setTimeout(() => {
-      const values = this.form.getRawValue();
-      console.log('Saving preferences:', values);
+    const values = this.form.getRawValue();
+    localStorage.setItem('userPreferences', JSON.stringify(values));
 
-      // In real app: save to backend and localStorage
-      localStorage.setItem('userPreferences', JSON.stringify(values));
+    this.userPreferencesService.updatePreferences(values as unknown as UserPreferencesDto).subscribe({
+      next: () => this.finishSave(),
+      error: () => {
+        // No backend yet (§7) — localStorage write above already happened, so from the user's
+        // perspective on this device the save still "worked"; just flag the gap for next load.
+        this.backendMissing.set(true);
+        this.finishSave();
+      }
+    });
+  }
 
-      this.saving.set(false);
-      this.saveSuccess.set(true);
-
-      // Hide success message after 3 seconds
-      setTimeout(() => this.saveSuccess.set(false), 3000);
-    }, 800);
+  private finishSave(): void {
+    this.saving.set(false);
+    this.saveSuccess.set(true);
+    setTimeout(() => this.saveSuccess.set(false), 3000);
   }
 
   /**

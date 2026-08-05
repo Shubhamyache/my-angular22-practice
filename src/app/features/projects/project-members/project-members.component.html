@@ -1,0 +1,126 @@
+<div class="container-fluid py-2">
+
+  <!-- Back button -->
+  <div class="mb-4">
+    <button class="btn btn-outline-secondary btn-sm" (click)="onBack()">
+      <i class="bi bi-arrow-left me-1"></i> Back to Project
+    </button>
+  </div>
+
+  @if (loading()) {
+    <app-loader />
+  } @else if (error()) {
+    <div class="alert alert-danger">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error() }}
+    </div>
+  } @else if (project(); as proj) {
+
+    <h2 class="fw-bold mb-1">
+      <i class="bi bi-people-fill me-2 text-info"></i>Manage Team
+    </h2>
+    <p class="text-muted mb-4">{{ proj.name }} <span class="font-monospace">({{ proj.code }})</span></p>
+
+    <div class="row g-4">
+
+      <!-- Add Member -->
+      <div class="col-12 col-lg-5">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-white border-bottom">
+            <h6 class="mb-0 fw-semibold"><i class="bi bi-person-plus me-2 text-success"></i>Add Member</h6>
+          </div>
+          <div class="card-body">
+            <input
+              type="search"
+              class="form-control mb-3"
+              placeholder="Search employees by name or email…"
+              [value]="searchQuery()"
+              (input)="onSearchInput($any($event.target).value)" />
+
+            @if (searching()) {
+              <div class="text-center text-muted small py-3">
+                <span class="spinner-border spinner-border-sm me-2"></span>Searching…
+              </div>
+            } @else if (searchQuery().trim() && searchResults().length === 0) {
+              <p class="text-muted small text-center py-3 mb-0">No matching employees (or already a member).</p>
+            }
+
+            <div class="d-flex flex-column gap-2">
+              @for (emp of searchResults(); track emp.id) {
+                <div class="d-flex align-items-center justify-content-between border rounded p-2">
+                  <div class="d-flex align-items-center gap-2 overflow-hidden">
+                    <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center flex-shrink-0"
+                      style="width:32px;height:32px;font-size:0.75rem;font-weight:700;">
+                      {{ emp.firstName[0] }}{{ emp.lastName[0] }}
+                    </div>
+                    <div class="text-truncate">
+                      <div class="small fw-semibold text-truncate">{{ emp.firstName }} {{ emp.lastName }}</div>
+                      <div class="text-muted text-truncate" style="font-size:0.7rem;">{{ emp.jobTitle }}</div>
+                    </div>
+                  </div>
+                  <button
+                    class="btn btn-sm btn-outline-success flex-shrink-0"
+                    [disabled]="addingId() === emp.id"
+                    (click)="addMember(emp)">
+                    @if (addingId() === emp.id) {
+                      <span class="spinner-border spinner-border-sm"></span>
+                    } @else {
+                      <i class="bi bi-plus-lg"></i>
+                    }
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Current Members -->
+      <div class="col-12 col-lg-7">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 fw-semibold"><i class="bi bi-people me-2 text-primary"></i>Current Team</h6>
+            <span class="badge bg-light text-dark border">{{ members().length }} members</span>
+          </div>
+          <div class="card-body p-0">
+            @if (members().length === 0) {
+              <div class="text-center text-muted py-5">
+                <i class="bi bi-person-x display-6 d-block mb-2"></i>
+                No members on this project yet.
+              </div>
+            } @else {
+              <ul class="list-group list-group-flush">
+                @for (member of members(); track member.id) {
+                  <li class="list-group-item d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2 overflow-hidden">
+                      <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0"
+                        style="width:36px;height:36px;font-size:0.8rem;font-weight:700;">
+                        {{ member.firstName[0] }}{{ member.lastName[0] }}
+                      </div>
+                      <div class="text-truncate">
+                        <div class="fw-semibold small text-truncate">{{ member.firstName }} {{ member.lastName }}</div>
+                        <div class="text-muted text-truncate" style="font-size:0.75rem;">{{ member.jobTitle }} · {{ member.departmentName }}</div>
+                      </div>
+                    </div>
+                    <button
+                      class="btn btn-sm btn-outline-danger flex-shrink-0"
+                      [disabled]="removingId() === member.id"
+                      (click)="removeMember(member)">
+                      @if (removingId() === member.id) {
+                        <span class="spinner-border spinner-border-sm"></span>
+                      } @else {
+                        <i class="bi bi-x-lg"></i>
+                      }
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  }
+
+</div>

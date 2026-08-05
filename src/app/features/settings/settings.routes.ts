@@ -50,7 +50,10 @@ export const SETTINGS_ROUTES: Routes = [
         loadComponent: () =>
           import('./preferences/preferences-settings.component').then(c => c.PreferencesSettingsComponent)
       },
-      { path: '', redirectTo: 'general', pathMatch: 'full' }
+      // 'profile' (not 'general') — General is Admin-only (roleGuard above), so redirecting
+      // here would silently bounce every non-Admin who clicks "Settings" in the sidebar
+      // straight back to /dashboard with no explanation. Profile is open to every role.
+      { path: '', redirectTo: 'profile', pathMatch: 'full' }
     ]
   }
 ];

@@ -201,15 +201,17 @@
             </h5>
           </div>
           <div class="card-body d-grid gap-2">
-            <button class="btn btn-outline-primary">
+            <a [routerLink]="['/tasks']" [queryParams]="{ projectId: proj.id }" class="btn btn-outline-primary">
               <i class="bi bi-list-task me-2"></i>View Tasks
-            </button>
-            <button class="btn btn-outline-info">
-              <i class="bi bi-people me-2"></i>Manage Team
-            </button>
-            <button class="btn btn-outline-secondary">
+            </a>
+            @if (canEdit()) {
+              <a [routerLink]="['/projects', proj.id, 'members']" class="btn btn-outline-info">
+                <i class="bi bi-people me-2"></i>Manage Team
+              </a>
+            }
+            <a routerLink="/reports" class="btn btn-outline-secondary">
               <i class="bi bi-file-earmark-pdf me-2"></i>Export Report
-            </button>
+            </a>
           </div>
         </div>
 

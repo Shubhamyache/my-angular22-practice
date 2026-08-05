@@ -31,17 +31,6 @@ export class LoginComponent {
     this.showPassword.update(v => !v);
   }
 
-  /**
-   * Quick login for development - fills form and submits automatically
-   */
-  quickLogin(): void {
-    this.loginForm.patchValue({
-      email: 'admin@example.com',
-      password: 'password'
-    });
-    this.onSubmit();
-  }
-
   onSubmit(): void {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();

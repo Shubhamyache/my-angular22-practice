@@ -51,5 +51,12 @@ export const PROJECT_ROUTES: Routes = [
     canActivate: [roleGuard],
     loadComponent: () =>
       import('./project-form/project-form.component').then(c => c.ProjectFormComponent)
+  },
+  {
+    path: ':id/members',
+    data: { roles: ['Admin', 'Manager'] },
+    canActivate: [roleGuard],
+    loadComponent: () =>
+      import('./project-members/project-members.component').then(c => c.ProjectMembersComponent)
   }
 ];

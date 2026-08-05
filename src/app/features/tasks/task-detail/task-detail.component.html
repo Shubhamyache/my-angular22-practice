@@ -170,13 +170,19 @@
             </h5>
           </div>
           <div class="card-body d-grid gap-2">
-            <button class="btn btn-outline-primary">
-              <i class="bi bi-clock-history me-2"></i>Log Time
+            <button class="btn btn-outline-primary" [disabled]="loggingTime()" (click)="logTime()">
+              @if (loggingTime()) {
+                <span class="spinner-border spinner-border-sm me-2"></span>Logging…
+              } @else {
+                <i class="bi bi-clock-history me-2"></i>Log Time
+              }
             </button>
-            <button class="btn btn-outline-info">
+            <button class="btn btn-outline-info" disabled
+              title="Task comments aren't available yet — see FeaturesToImplement.md §10">
               <i class="bi bi-chat-dots me-2"></i>Add Comment
             </button>
-            <button class="btn btn-outline-secondary">
+            <button class="btn btn-outline-secondary" disabled
+              title="Task attachments aren't available yet — see FeaturesToImplement.md §11">
               <i class="bi bi-paperclip me-2"></i>Attach File
             </button>
           </div>

@@ -1,38 +1,50 @@
 <h5 class="fw-bold mb-1">Profile Settings</h5>
 <p class="text-muted small mb-3">Update your personal information</p>
 
-<!-- GET /auth/me is real and read-only; there is no PUT /users/me (profile edit) or avatar
-     upload endpoint yet (UIIntegrationInfo.md §12/§18) — this form is not wired to any of it. -->
-<div class="alert alert-secondary d-flex align-items-center gap-2 py-2 mb-4">
-  <i class="bi bi-tools flex-shrink-0"></i>
-  <small>Not yet connected to a backend — changes (including photo upload) aren't saved. See UIIntegrationInfo.md §12/§18.</small>
-</div>
+@if (backendMissing()) {
+  <!-- PUT /users/me/profile doesn't exist yet — the form below is fully wired to call it
+       (FeaturesToImplement.md §1) and needs no further Angular changes once it ships. -->
+  <div class="alert alert-secondary d-flex align-items-center gap-2 py-2 mb-4">
+    <i class="bi bi-tools flex-shrink-0"></i>
+    <small>Not yet connected to a backend — changes here won't be saved. See FeaturesToImplement.md §1.</small>
+  </div>
+}
+
+@if (saveSuccess()) {
+  <div class="alert alert-success alert-dismissible fade show py-2">
+    <i class="bi bi-check-circle-fill me-2"></i>Profile saved.
+    <button type="button" class="btn-close" (click)="saveSuccess.set(false)"></button>
+  </div>
+}
 
 <div class="d-flex align-items-center gap-4 mb-4">
   <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold fs-3"
-    style="width:80px;height:80px;flex-shrink:0;">A</div>
+    style="width:80px;height:80px;flex-shrink:0;">{{ form.get('firstName')?.value?.[0] ?? 'A' }}</div>
   <div>
-    <button class="btn btn-outline-primary btn-sm me-2">Upload Photo</button>
-    <button class="btn btn-outline-danger btn-sm">Remove</button>
-    <p class="text-muted small mt-1 mb-0">JPG or PNG, max 2MB</p>
+    <button class="btn btn-outline-primary btn-sm me-2" disabled
+      title="Avatar upload has no backend endpoint yet — see FeaturesToImplement.md §2">Upload Photo</button>
+    <button class="btn btn-outline-danger btn-sm" disabled
+      title="Avatar upload has no backend endpoint yet — see FeaturesToImplement.md §2">Remove</button>
+    <p class="text-muted small mt-1 mb-0">JPG or PNG, max 2MB — pending backend (§2)</p>
   </div>
 </div>
 
-<form [formGroup]="form">
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
   <div class="row g-3">
     <div class="col-md-6">
       <label class="form-label fw-semibold small">First Name</label>
-      <input formControlName="firstName" type="text" class="form-control" />
+      <input formControlName="firstName" type="text" class="form-control"
+        [class.is-invalid]="form.get('firstName')?.invalid && form.get('firstName')?.touched" />
     </div>
     <div class="col-md-6">
       <label class="form-label fw-semibold small">Last Name</label>
-      <input formControlName="lastName" type="text" class="form-control" />
+      <input formControlName="lastName" type="text" class="form-control"
+        [class.is-invalid]="form.get('lastName')?.invalid && form.get('lastName')?.touched" />
     </div>
     <div class="col-md-6">
       <label class="form-label fw-semibold small">Email</label>
-      <input formControlName="email" type="email" class="form-control"
-        [class.is-invalid]="form.get('email')?.invalid && form.get('email')?.touched" />
-      <div class="invalid-feedback">Valid email is required.</div>
+      <input formControlName="email" type="email" class="form-control" />
+      <small class="text-muted">Email changes aren't supported from this form — see FeaturesToImplement.md §1.</small>
     </div>
     <div class="col-md-6">
       <label class="form-label fw-semibold small">Phone</label>
@@ -44,6 +56,12 @@
     </div>
   </div>
   <div class="mt-4">
-    <button type="submit" class="btn btn-primary">Save Profile</button>
+    <button type="submit" class="btn btn-primary" [disabled]="saving() || loading()">
+      @if (saving()) {
+        <span class="spinner-border spinner-border-sm me-2"></span>Saving...
+      } @else {
+        Save Profile
+      }
+    </button>
   </div>
 </form>

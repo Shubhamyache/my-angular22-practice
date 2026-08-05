@@ -76,6 +76,29 @@
                         </span>
                       </div>
                     }
+                    @if (canManageTasks) {
+                      <div class="d-flex justify-content-between mt-2 pt-2 border-top">
+                        <button
+                          class="btn btn-sm btn-outline-secondary py-0 px-2"
+                          style="font-size:0.7rem;"
+                          [disabled]="!prevStatus(task.status) || movingId() === task.id"
+                          (click)="moveTask(task, prevStatus(task.status)!)"
+                          title="Move back a column">
+                          <i class="bi bi-chevron-left"></i>
+                        </button>
+                        <a [routerLink]="['/tasks', task.id]" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size:0.7rem;">
+                          <i class="bi bi-eye"></i>
+                        </a>
+                        <button
+                          class="btn btn-sm btn-outline-secondary py-0 px-2"
+                          style="font-size:0.7rem;"
+                          [disabled]="!nextStatus(task.status) || movingId() === task.id"
+                          (click)="moveTask(task, nextStatus(task.status)!)"
+                          title="Move forward a column">
+                          <i class="bi bi-chevron-right"></i>
+                        </button>
+                      </div>
+                    }
                   </div>
                 </div>
               } @empty {

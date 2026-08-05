@@ -13,19 +13,6 @@
 
     <!-- Body -->
     <div class="card-body p-4">
-      <!-- Development Mode Notice -->
-      <div class="alert alert-info d-flex align-items-start gap-2 py-2 mb-3">
-        <i class="bi bi-info-circle-fill flex-shrink-0 mt-1"></i>
-        <div class="small">
-          <strong>Development Mode</strong><br>
-          Use any credentials to login. Try:
-          <div class="mt-1 font-monospace">
-            <strong>Email:</strong> admin@example.com<br>
-            <strong>Password:</strong> password
-          </div>
-        </div>
-      </div>
-
       @if (errorMessage()) {
         <div class="alert alert-danger alert-dismissible d-flex align-items-center gap-2 py-2">
           <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
@@ -100,23 +87,7 @@
             <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
           }
         </button>
-
-        <!-- Quick Login Button -->
-        <button
-          type="button"
-          class="btn btn-outline-secondary w-100 py-2"
-          (click)="quickLogin()"
-          [disabled]="loading()">
-          <i class="bi bi-lightning-fill me-1"></i> Quick Login (Dev)
-        </button>
       </form>
-    </div>
-
-    <div class="card-footer bg-light text-center text-muted border-0 py-3">
-      <small>
-        <i class="bi bi-code-square me-1 text-primary"></i>
-        Mock Authentication (Development Only)
-      </small>
     </div>
   </div>
 </div>
