@@ -13,9 +13,11 @@
         <span class="text-primary">{{ store.stats().completed }}</span> completed
       </small>
     </div>
-    <a routerLink="create" class="btn btn-primary">
-      <i class="bi bi-plus-lg me-1"></i> New Project
-    </a>
+    @if (canManageProjects) {
+      <a routerLink="create" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> New Project
+      </a>
+    }
   </div>
 
   <!-- Search and Filters -->
@@ -192,15 +194,17 @@
                 <a [routerLink]="[project.id]" class="btn btn-sm btn-outline-primary" title="View Details">
                   <i class="bi bi-eye"></i>
                 </a>
-                <a [routerLink]="[project.id, 'edit']" class="btn btn-sm btn-outline-warning" title="Edit">
-                  <i class="bi bi-pencil"></i>
-                </a>
-                <button
-                  class="btn btn-sm btn-outline-danger"
-                  title="Delete"
-                  (click)="confirmDelete(project.id, project.name)">
-                  <i class="bi bi-trash"></i>
-                </button>
+                @if (canManageProjects) {
+                  <a [routerLink]="[project.id, 'edit']" class="btn btn-sm btn-outline-warning" title="Edit">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  <button
+                    class="btn btn-sm btn-outline-danger"
+                    title="Delete"
+                    (click)="confirmDelete(project.id, project.name)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                }
               </div>
             </div>
 
@@ -231,9 +235,11 @@
                 Get started by creating your first project
               }
             </p>
-            <a routerLink="create" class="btn btn-primary mt-2">
-              <i class="bi bi-plus-lg me-1"></i>Create Project
-            </a>
+            @if (canManageProjects) {
+              <a routerLink="create" class="btn btn-primary mt-2">
+                <i class="bi bi-plus-lg me-1"></i>Create Project
+              </a>
+            }
           </div>
         </div>
       }

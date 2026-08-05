@@ -2,14 +2,19 @@
  * ═══════════════════════════════════════════════════════════════════
  * TASK DETAIL COMPONENT
  * ═══════════════════════════════════════════════════════════════════
+ * `task`/`loading`/`error` are `computed()` signals reading directly from the store — see the
+ * matching note in project-detail.component.ts for why (the previous version's synchronous
+ * local-signal copy immediately after an async `loadTaskById()` call never actually reflected
+ * the loaded data; same latent bug, same minimal fix, not a UI redesign).
  */
 
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TaskStore } from '../store/task.store';
-import { Task } from '../models/task.model';
+import { TaskService } from '../services/task.service';
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
 import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-task-detail',
@@ -19,13 +24,24 @@ import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
   templateUrl: './task-detail.component.html'
 })
 export class TaskDetailComponent implements OnInit {
-  private readonly store  = inject(TaskStore);
-  private readonly route  = inject(ActivatedRoute);
-  private readonly router = inject(Router);
+  private readonly store       = inject(TaskStore);
+  private readonly taskService = inject(TaskService);
+  private readonly authService = inject(AuthService);
+  private readonly route       = inject(ActivatedRoute);
+  private readonly router      = inject(Router);
 
-  protected readonly task    = signal<Task | null>(null);
-  protected readonly loading = signal(true);
-  protected readonly error   = signal<string | null>(null);
+  /** Admin/Manager per §13 — see task-list.component.ts for why this is role-only, not
+   *  per-record ownership (TaskDto has no project.managerId to check against). */
+  protected readonly canManageTasks = ['Admin', 'Manager'].includes(this.authService.getUserRole());
+
+  private readonly invalidId = signal(false);
+  private readonly deleting  = signal(false);
+
+  protected readonly task    = computed(() => this.store.selectedTask());
+  protected readonly loading = computed(() => this.store.loading());
+  protected readonly error   = computed(() =>
+    this.invalidId() ? 'Invalid task ID' : this.store.error()
+  );
 
   private taskId = 0;
 
@@ -49,18 +65,10 @@ export class TaskDetailComponent implements OnInit {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.taskId = Number(id);
-      this.loadTask();
+      this.store.loadTaskById(this.taskId);
     } else {
-      this.error.set('Invalid task ID');
-      this.loading.set(false);
+      this.invalidId.set(true);
     }
-  }
-
-  private loadTask(): void {
-    this.store.loadTaskById(this.taskId);
-    this.task.set(this.store.selectedTask());
-    this.loading.set(this.store.loading());
-    this.error.set(this.store.error());
   }
 
   onEdit(): void {
@@ -69,11 +77,19 @@ export class TaskDetailComponent implements OnInit {
 
   onDelete(): void {
     const t = this.task();
-    if (!t) return;
+    if (!t || this.deleting()) return;
 
     if (confirm(`Are you sure you want to delete "${t.title}"?`)) {
-      this.store.removeTask(t.id);
-      this.router.navigate(['/tasks']);
+      this.deleting.set(true);
+      this.taskService.delete(t.id).subscribe({
+        next: () => {
+          this.store.removeTask(t.id);
+          this.router.navigate(['/tasks']);
+        },
+        error: () => {
+          this.deleting.set(false);
+        }
+      });
     }
   }
 

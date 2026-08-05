@@ -76,4 +76,12 @@
   <!-- ③ FOOTER ─────────────────────────────────────────────────────────────── -->
   <app-footer />
 
+  <!-- ④ GLOBAL ERROR TOAST ─────────────────────────────────────────────────── -->
+  <!-- Backed by ErrorHandlerService, populated by errorInterceptor for 403/409/500
+       responses (UIIntegrationInfo.md §11). One host for the whole app, mounted here
+       rather than per-screen. -->
+  @if (errorNotice(); as notice) {
+    <app-toast [message]="notice.message" [type]="notice.type" />
+  }
+
 </div>

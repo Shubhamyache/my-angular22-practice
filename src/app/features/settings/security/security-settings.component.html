@@ -1,5 +1,12 @@
 <h5 class="fw-bold mb-1">Security Settings</h5>
-<p class="text-muted small mb-4">Manage your password and authentication preferences</p>
+<p class="text-muted small mb-3">Manage your password and authentication preferences</p>
+
+<!-- No PUT /users/me/password, /users/me/2fa, or /users/me/sessions endpoints exist yet
+     (UIIntegrationInfo.md §18) — nothing on this page is persisted or real. -->
+<div class="alert alert-secondary d-flex align-items-center gap-2 py-2 mb-4">
+  <i class="bi bi-tools flex-shrink-0"></i>
+  <small>Not yet connected to a backend — changes here aren't saved. See UIIntegrationInfo.md §18.</small>
+</div>
 
 <!-- Change password -->
 <div class="mb-4 pb-4 border-bottom">

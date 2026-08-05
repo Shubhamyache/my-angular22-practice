@@ -1,11 +1,15 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
+import { UserRole } from '../../core/models/auth.model';
 
 interface NavItem {
   label:  string;
   icon:   string;
   route:  string;
   badge?: number;
+  /** Roles allowed to see this item. Omit for "visible to every authenticated role." */
+  roles?: UserRole[];
 }
 
 interface NavGroup {
@@ -25,6 +29,8 @@ export class SidebarComponent {
   readonly isMobile      = input<boolean>(false);
   readonly closeRequested = output<void>();
 
+  private readonly authService = inject(AuthService);
+
   /**
    * Nav groups allow logical grouping of sidebar items.
    * Each group renders a section heading (when expanded)
@@ -40,7 +46,9 @@ export class SidebarComponent {
     {
       heading: 'Work',
       items: [
-        { label: 'Employees',   icon: 'bi-people-fill',    route: '/employees',  badge: 248 },
+        // Employee directory: Admin/HR/Manager per UIIntegrationInfo.md §13 — Employee has no
+        // directory access at all.
+        { label: 'Employees',   icon: 'bi-people-fill',    route: '/employees',  badge: 248, roles: ['Admin', 'HR', 'Manager'] },
         { label: 'Projects',    icon: 'bi-kanban-fill',    route: '/projects' },
         { label: 'Tasks',       icon: 'bi-check2-square',  route: '/tasks' }
       ]
@@ -49,8 +57,10 @@ export class SidebarComponent {
       heading: 'HR & Finance',
       items: [
         { label: 'Departments', icon: 'bi-diagram-3-fill', route: '/departments' },
-        { label: 'Payroll',     icon: 'bi-cash-coin',      route: '/payroll' },
-        { label: 'Reports',     icon: 'bi-bar-chart-fill', route: '/reports' }
+        // Payroll: Admin/HR only per §13 (matches the existing roleGuard on the /payroll route).
+        { label: 'Payroll',     icon: 'bi-cash-coin',      route: '/payroll', roles: ['Admin', 'HR'] },
+        // Reports: Employee has zero access to the Reports controller per §4/§13.
+        { label: 'Reports',     icon: 'bi-bar-chart-fill', route: '/reports', roles: ['Admin', 'HR', 'Manager'] }
       ]
     },
     {
@@ -60,6 +70,22 @@ export class SidebarComponent {
       ]
     }
   ];
+
+  /** Role-filtered nav, recomputed whenever the decoded token's role changes (e.g. re-login). */
+  protected readonly visibleNavGroups = computed<NavGroup[]>(() => {
+    // Reading currentUser() here just to make this computed() re-run once /auth/me resolves on
+    // app bootstrap — the actual role check below intentionally still uses the JWT (available
+    // immediately on login, before /auth/me responds), not currentUser().role.
+    this.authService.currentUser();
+    const role = this.authService.getUserRole() as UserRole;
+
+    return this.navGroups
+      .map(group => ({
+        ...group,
+        items: group.items.filter(item => !item.roles || item.roles.includes(role))
+      }))
+      .filter(group => group.items.length > 0);
+  });
 
   close(): void {
     this.closeRequested.emit();

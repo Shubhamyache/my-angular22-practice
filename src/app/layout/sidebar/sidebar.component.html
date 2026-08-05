@@ -23,7 +23,7 @@
 
   <!-- Grouped nav -->
   <nav class="flex-grow-1 px-2 overflow-y-auto">
-    @for (group of navGroups; track group.heading) {
+    @for (group of visibleNavGroups(); track group.heading) {
 
       @if (isOpen()) {
         <div class="px-2 pt-3 pb-1">

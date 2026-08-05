@@ -1,34 +1,49 @@
+import { Employee } from '../../employees/models/employee.model';
+import { Project } from '../../projects/models/project.model';
+import { Task } from '../../tasks/models/task.model';
+
 /**
  * ═══════════════════════════════════════════════════════════════════
- * DASHBOARD DOMAIN MODELS
+ * RAW BACKEND DTOs — exactly what GET /api/v1/dashboard returns
  * ═══════════════════════════════════════════════════════════════════
+ * Per UIIntegrationInfo.md §5/§4 (Dashboard): `recentEmployees`/`recentProjects`/`recentTasks`
+ * are full `EmployeeDto[]`/`ProjectDto[]`/`TaskDto[]` — NOT the slim per-widget projections
+ * (`RecentEmployee`/`RecentProject`/`RecentTask` below) that this app's dashboard widgets were
+ * originally built against while running on mock data. The backend has no `initials`/`color`
+ * fields at all (those were a mock-data-only convenience), and `changePercent` replaces the
+ * mock's `employeeChange`/`projectChange`/etc.
  *
- * WHY SEPARATE MODELS? — The Projection Pattern
- * ───────────────────────────────────────────────
- * The full Employee entity has 25+ fields. The full Project entity has
- * 30+ fields. The dashboard only needs 5–8 fields from each entity
- * to render its summary cards and lists.
- *
- * Instead of reusing the full entity type (which would couple features),
- * we define a PROJECTION — a minimal interface containing only the
- * fields THIS feature needs.
- *
- * Benefits:
- *  1. DECOUPLING    — Dashboard does not import from Employee/Project feature
- *  2. PERFORMANCE   — API sends less data (avoids over-fetching)
- *  3. SINGLE RESPONSIBILITY — Each type has one focused purpose
- *  4. TESTABILITY   — Easy to create minimal mock data for tests
- *
- * .NET 10 Backend Mapping (future integration):
- * ──────────────────────────────────────────────
- *   DashboardSummary   ←→   DashboardSummaryDto   (C# record)
- *   RecentEmployee     ←→   RecentEmployeeDto
- *   RecentProject      ←→   RecentProjectDto
- *   RecentTask         ←→   RecentTaskDto
- *
- * The C# endpoint:
- *   GET /api/dashboard  →  returns DashboardSummaryDto
- *   Uses a single SQL query with multiple JOINs (no N+1 problem).
+ * Rather than reshaping the widget components (which would violate "preserve the UI exactly"),
+ * `DashboardService` adapts these raw DTOs into the unchanged `DashboardSummary` shape below —
+ * see the adapter functions in dashboard.service.ts for the full rationale.
+ */
+export interface DashboardStatDto {
+  value: number;
+  changePercent: number;
+}
+
+export interface DashboardStatsDto {
+  headcount: DashboardStatDto;
+  activeProjects: DashboardStatDto;
+  pendingTasks: DashboardStatDto;
+  departments: DashboardStatDto;
+}
+
+export interface DashboardSummaryDto {
+  stats: DashboardStatsDto;
+  recentEmployees: Employee[];
+  recentProjects: Project[];
+  recentTasks: Task[];
+  lastUpdated: string;
+}
+
+/**
+ * ═══════════════════════════════════════════════════════════════════
+ * WIDGET-FACING PROJECTIONS — unchanged public contract of the dashboard widgets
+ * ═══════════════════════════════════════════════════════════════════
+ * These are exactly what they were before backend integration. Every dashboard widget
+ * component (`stats-card`, `recent-employees`, `recent-projects`, `recent-tasks`,
+ * `quick-actions`) keeps reading these shapes — only `DashboardService` changes.
  */
 
 // ── Statistics (the four KPI cards at the top) ───────────────────
@@ -43,19 +58,6 @@ export interface DashboardStats {
   departmentChange: number;
 }
 
-// ── Union Types (preferred over numeric enums in Angular) ─────────
-/**
- * WHY STRING UNION TYPES instead of TypeScript enums?
- * ─────────────────────────────────────────────────────
- * enum EmployeeStatus { Active = 0, Inactive = 1 }
- *   → JSON from .NET: { "status": 0 }  — requires a mapping layer
- *   → Not self-documenting in DevTools
- *
- * type EmployeeStatus = 'Active' | 'Inactive' | 'OnLeave'
- *   → JSON from .NET: { "status": "Active" } — maps directly
- *   → TypeScript enforces valid values at compile time
- *   → Self-documenting in logs, DevTools, and UI
- */
 export type EmployeeStatus = 'Active' | 'Inactive' | 'OnLeave';
 export type ProjectStatus  = 'Planning' | 'Active' | 'OnHold' | 'Completed' | 'Cancelled';
 export type TaskStatus     = 'Todo' | 'InProgress' | 'InReview' | 'Done';
@@ -68,8 +70,8 @@ export interface RecentEmployee {
   name:       string;
   jobTitle:   string;
   department: string;
-  initials:   string;   // Pre-computed server-side: 'Sarah Johnson' → 'SJ'
-  color:      string;   // Bootstrap token: 'primary'|'success'|'info'|'warning'|'danger'
+  initials:   string;   // Client-computed from firstName/lastName — the backend doesn't send this
+  color:      string;   // Bootstrap token — client-assigned deterministically from the employee id
   joinDate:   Date;
   status:     EmployeeStatus;
 }
@@ -92,7 +94,7 @@ export interface RecentTask {
   priority:         Priority;
   assignee:         string;
   assigneeInitials: string;
-  assigneeColor:    string;   // Bootstrap color token
+  assigneeColor:    string;   // Bootstrap color token — client-assigned, see RecentEmployee.color
   dueDate:          Date;
   projectName:      string;
 }
@@ -105,7 +107,7 @@ export interface QuickAction {
   description: string;
 }
 
-// ── Root Aggregate — maps 1:1 to GET /api/dashboard response ─────
+// ── Root Aggregate — the shape every dashboard widget consumes ────
 export interface DashboardSummary {
   stats:           DashboardStats;
   recentEmployees: RecentEmployee[];

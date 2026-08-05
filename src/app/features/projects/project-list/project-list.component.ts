@@ -26,7 +26,9 @@ import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/cor
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ProjectStore } from '../store/project.store';
+import { ProjectService } from '../services/project.service';
 import { ProjectStatus } from '../models/project.model';
+import { AuthService } from '../../../core/services/auth.service';
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
 import { CurrencyFormatPipe } from '../../../shared/pipes/currency-format.pipe';
 import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
@@ -46,17 +48,27 @@ import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 })
 export class ProjectListComponent implements OnInit {
   protected readonly store = inject(ProjectStore);
+  private readonly projectService = inject(ProjectService);
+  private readonly authService = inject(AuthService);
+
+  /** Create/edit/delete — Admin, Manager per §13 (HR is read-only on Projects; ownership of
+   *  an individual project for a Manager is enforced by the backend via 403, not precomputed
+   *  here — see UIIntegrationInfo.md §13's guidance on why route/coarse checks can't fully
+   *  express per-record ownership). */
+  protected readonly canManageProjects = ['Admin', 'Manager'].includes(this.authService.getUserRole());
 
   // Local UI state
   protected searchTerm = '';
 
   // Status filter options
   protected readonly statusFilters: Array<ProjectStatus | 'All'> = [
-    'All', 'Active', 'OnHold', 'Completed', 'Cancelled'
+    'All', 'Planning', 'Active', 'OnHold', 'Completed', 'Cancelled'
   ];
 
-  // Status badge configuration
+  // Status badge configuration — 'Planning' added to match the real ProjectStatus enum
+  // (UIIntegrationInfo.md §5), which this app's mock data never produced.
   protected readonly statusConfig: Record<ProjectStatus, { badge: string; label: string }> = {
+    Planning:  { badge: 'bg-info text-dark',       label: 'Planning' },
     Active:    { badge: 'bg-success',              label: 'Active' },
     OnHold:    { badge: 'bg-warning text-dark',    label: 'On Hold' },
     Completed: { badge: 'bg-primary',              label: 'Completed' },
@@ -110,11 +122,15 @@ export class ProjectListComponent implements OnInit {
   }
 
   /**
-   * Handle project deletion with confirmation
+   * Handle project deletion with confirmation. Previously called store.removeProject(id)
+   * directly without ever calling DELETE /projects/{id} — fixed to call the real endpoint
+   * first (see EmployeeListComponent.confirmDelete for the same fix + rationale).
    */
   confirmDelete(id: number, name: string): void {
     if (confirm(`Are you sure you want to delete project "${name}"?`)) {
-      this.store.removeProject(id);
+      this.projectService.delete(id).subscribe({
+        next: () => this.store.removeProject(id)
+      });
     }
   }
 

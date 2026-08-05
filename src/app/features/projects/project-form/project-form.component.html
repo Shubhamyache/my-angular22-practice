@@ -114,7 +114,7 @@
                   formControlName="managerId"
                   [class.is-invalid]="isInvalid('managerId')">
                   <option [value]="0">Select Manager</option>
-                  @for (mgr of managers; track mgr.id) {
+                  @for (mgr of managers(); track mgr.id) {
                     <option [value]="mgr.id">{{ mgr.name }}</option>
                   }
                 </select>

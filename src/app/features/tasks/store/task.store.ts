@@ -62,7 +62,7 @@ export class TaskStore {
     if (query) {
       result = result.filter(t =>
         t.title.toLowerCase().includes(query) ||
-        t.description.toLowerCase().includes(query) ||
+        (t.description?.toLowerCase().includes(query) ?? false) ||
         t.projectName.toLowerCase().includes(query) ||
         t.assigneeName.toLowerCase().includes(query)
       );
@@ -151,6 +151,7 @@ export class TaskStore {
 
   loadTaskById(id: number): void {
     this._loading.set(true);
+    this._error.set(null);
     this.taskService.getById(id).subscribe({
       next: task => {
         this._selectedTask.set(task);

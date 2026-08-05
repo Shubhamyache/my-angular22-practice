@@ -3,10 +3,22 @@
     <h2 class="fw-bold mb-0">
       <i class="bi bi-cash-coin me-2 text-warning"></i>Payroll
     </h2>
-    <button class="btn btn-warning text-dark">
-      <i class="bi bi-play-circle me-1"></i> Run Payroll
+    <button class="btn btn-warning text-dark" (click)="runPayroll()" [disabled]="generating()">
+      @if (generating()) {
+        <span class="spinner-border spinner-border-sm me-2"></span>Running…
+      } @else {
+        <i class="bi bi-play-circle me-1"></i> Run Payroll
+      }
     </button>
   </div>
+
+  @if (generateResult()) {
+    <div class="alert alert-success alert-dismissible d-flex align-items-center gap-2">
+      <i class="bi bi-check-circle-fill flex-shrink-0"></i>
+      <span>{{ generateResult() }}</span>
+      <button type="button" class="btn-close ms-auto" (click)="generateResult.set(null)"></button>
+    </div>
+  }
 
   @if (loading()) {
     <app-loader />
@@ -26,13 +38,14 @@
                 <th class="text-end">Deductions</th>
                 <th class="text-end">Net Pay</th>
                 <th>Status</th>
+                <th class="text-end pe-4">Actions</th>
               </tr>
             </thead>
             <tbody>
               @for (p of payrolls(); track p.id) {
                 <tr>
                   <td class="ps-4 fw-semibold">{{ p.employeeName }}</td>
-                  <td class="text-muted small">{{ p.department }}</td>
+                  <td class="text-muted small">{{ p.departmentName }}</td>
                   <td class="text-muted small">
                     {{ p.periodStart | dateFormat:'short' }} –
                     {{ p.periodEnd   | dateFormat:'short' }}
@@ -50,10 +63,17 @@
                       {{ p.status }}
                     </span>
                   </td>
+                  <td class="text-end pe-4">
+                    @if (p.status === 'Pending') {
+                      <button class="btn btn-sm btn-outline-primary" (click)="process(p.id)">
+                        <i class="bi bi-check2-circle me-1"></i>Process
+                      </button>
+                    }
+                  </td>
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="7" class="text-center py-5 text-muted">
+                  <td colspan="8" class="text-center py-5 text-muted">
                     <i class="bi bi-inbox display-6 d-block mb-2"></i>
                     No payroll records found.
                   </td>

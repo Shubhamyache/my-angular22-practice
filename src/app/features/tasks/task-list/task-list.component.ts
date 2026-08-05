@@ -8,9 +8,11 @@ import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/cor
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TaskStore } from '../store/task.store';
+import { TaskService } from '../services/task.service';
 import { TaskStatus, TaskPriority } from '../models/task.model';
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
 import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-task-list',
@@ -26,6 +28,13 @@ import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 })
 export class TaskListComponent implements OnInit {
   protected readonly store = inject(TaskStore);
+  private readonly taskService = inject(TaskService);
+  private readonly authService = inject(AuthService);
+
+  /** Create/edit/delete — Admin, Manager per §13 (HR is read-only on Tasks). Per-record
+   *  "is this Manager's own project" ownership is enforced by the backend via 403, not
+   *  precomputed here (TaskDto carries no project.managerId to check against). */
+  protected readonly canManageTasks = ['Admin', 'Manager'].includes(this.authService.getUserRole());
 
   protected searchTerm = '';
 
@@ -82,9 +91,16 @@ export class TaskListComponent implements OnInit {
     return this.store.sortDirection() === 'asc' ? '↑' : '↓';
   }
 
+  /**
+   * Previously called store.removeTask(id) directly without ever calling DELETE
+   * /tasks/{id} — fixed to call the real endpoint first (same fix as EmployeeListComponent
+   * / ProjectListComponent).
+   */
   confirmDelete(task: { id: number; title: string }): void {
     if (confirm(`Are you sure you want to delete task "${task.title}"?`)) {
-      this.store.removeTask(task.id);
+      this.taskService.delete(task.id).subscribe({
+        next: () => this.store.removeTask(task.id)
+      });
     }
   }
 

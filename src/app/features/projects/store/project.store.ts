@@ -133,7 +133,7 @@ export class ProjectStore {
       result = result.filter(p =>
         p.name.toLowerCase().includes(query) ||
         p.code.toLowerCase().includes(query) ||
-        p.description.toLowerCase().includes(query) ||
+        (p.description?.toLowerCase().includes(query) ?? false) ||
         p.managerName.toLowerCase().includes(query)
       );
     }
@@ -215,6 +215,7 @@ export class ProjectStore {
    */
   loadProjectById(id: number): void {
     this._loading.set(true);
+    this._error.set(null);
     this.projectService.getById(id).subscribe({
       next: proj => {
         this._selectedProject.set(proj);

@@ -15,9 +15,17 @@
  * Angular matches routes top-to-bottom. Put specific routes (like 'create')
  * BEFORE parameterized routes (like ':id'). Otherwise, Angular would treat
  * 'create' as an ID.
+ *
+ * ROLE GATING (UIIntegrationInfo.md §13):
+ * ─────────────────────────────────────────
+ * List/detail are open to any authenticated role — the backend itself scopes what a Manager
+ * (own-managed projects) or Employee (member-of projects) actually sees/can open; a route
+ * guard can't express that per-record nuance, only "can this role reach this screen at all."
+ * Create/edit are role-gated to Admin/Manager (HR has read-only access to Projects per §13).
  */
 
 import { Routes } from '@angular/router';
+import { roleGuard } from '../../core/guards/role.guard';
 
 export const PROJECT_ROUTES: Routes = [
   {
@@ -27,6 +35,8 @@ export const PROJECT_ROUTES: Routes = [
   },
   {
     path: 'create',
+    data: { roles: ['Admin', 'Manager'] },
+    canActivate: [roleGuard],
     loadComponent: () =>
       import('./project-form/project-form.component').then(c => c.ProjectFormComponent)
   },
@@ -37,6 +47,8 @@ export const PROJECT_ROUTES: Routes = [
   },
   {
     path: ':id/edit',
+    data: { roles: ['Admin', 'Manager'] },
+    canActivate: [roleGuard],
     loadComponent: () =>
       import('./project-form/project-form.component').then(c => c.ProjectFormComponent)
   }

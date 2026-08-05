@@ -18,18 +18,25 @@
  *   URL: /projects/5
  *   route.snapshot.paramMap.get('id') → '5'
  *
- * snapshot vs subscribe:
- * - snapshot: For one-time read (simpler)
- * - paramMap.subscribe(): For dynamic updates (if same component reused)
+ * ⚠️ FIX DURING BACKEND INTEGRATION: `project`/`loading`/`error` are now `computed()` signals
+ * reading directly from the store, not a one-time local copy. The previous version called
+ * `store.loadProjectById(id)` (async) and then immediately did `this.project.set(store.selectedProject())`
+ * on the very next line — a synchronous read of state an async call hadn't populated yet, so the
+ * local signal was permanently stuck at whatever it was before navigating here. This "worked"
+ * by accident under this codebase's other detail components using this exact pattern, and is a
+ * genuine bug, not a design choice — mirroring `store.selectedProject()`/`loading()`/`error()`
+ * reactively via `computed()` is the minimal fix, not a UI redesign.
  */
 
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ProjectStore } from '../store/project.store';
-import { Project } from '../models/project.model';
+import { ProjectService } from '../services/project.service';
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
 import { CurrencyFormatPipe } from '../../../shared/pipes/currency-format.pipe';
 import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
+import { AuthService } from '../../../core/services/auth.service';
+import { canEditProject } from '../../../core/utils/permissions.util';
 
 @Component({
   selector: 'app-project-detail',
@@ -44,13 +51,27 @@ import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
   templateUrl: './project-detail.component.html'
 })
 export class ProjectDetailComponent implements OnInit {
-  private readonly store  = inject(ProjectStore);
-  private readonly route  = inject(ActivatedRoute);
-  private readonly router = inject(Router);
+  private readonly store          = inject(ProjectStore);
+  private readonly projectService = inject(ProjectService);
+  private readonly authService    = inject(AuthService);
+  private readonly route          = inject(ActivatedRoute);
+  private readonly router         = inject(Router);
 
-  protected readonly project = signal<Project | null>(null);
-  protected readonly loading = signal(true);
-  protected readonly error   = signal<string | null>(null);
+  private readonly invalidId = signal(false);
+
+  protected readonly project = computed(() => this.store.selectedProject());
+  protected readonly loading = computed(() => this.store.loading());
+  protected readonly error   = computed(() =>
+    this.invalidId() ? 'Invalid project ID' : this.store.error()
+  );
+
+  private readonly deleting = signal(false);
+
+  /** Admin (any), Manager (only projects they manage) — HR/Employee never see this screen's
+   *  Edit/Delete buttons at all. See core/utils/permissions.util.ts. */
+  protected readonly canEdit = computed(() =>
+    canEditProject(this.project()?.managerId ?? -1, this.authService.currentUser())
+  );
 
   private projectId = 0;
 
@@ -58,24 +79,10 @@ export class ProjectDetailComponent implements OnInit {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.projectId = Number(id);
-      this.loadProject();
+      this.store.loadProjectById(this.projectId);
     } else {
-      this.error.set('Invalid project ID');
-      this.loading.set(false);
+      this.invalidId.set(true);
     }
-  }
-
-  private loadProject(): void {
-    this.store.loadProjectById(this.projectId);
-
-    // We could also use store.selectedProject directly,
-    // but showing local signal pattern for flexibility
-    this.project.set(this.store.selectedProject());
-    this.loading.set(this.store.loading());
-    this.error.set(this.store.error());
-
-    // In real app with better state management,
-    // we'd subscribe to store changes
   }
 
   /**
@@ -86,15 +93,26 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   /**
-   * Delete with confirmation
+   * Delete with confirmation. Previously only removed the row from the local store without
+   * ever calling the API — fixed to actually call DELETE /projects/{id} first.
    */
   onDelete(): void {
     const proj = this.project();
-    if (!proj) return;
+    if (!proj || this.deleting()) return;
 
     if (confirm(`Are you sure you want to delete "${proj.name}"?`)) {
-      this.store.removeProject(proj.id);
-      this.router.navigate(['/projects']);
+      this.deleting.set(true);
+      this.projectService.delete(proj.id).subscribe({
+        next: () => {
+          this.store.removeProject(proj.id);
+          this.router.navigate(['/projects']);
+        },
+        error: () => {
+          // errorInterceptor already surfaced a toast for 403/409/500; for a 404 (already
+          // deleted elsewhere) the store's error() signal will show the inline alert.
+          this.deleting.set(false);
+        }
+      });
     }
   }
 

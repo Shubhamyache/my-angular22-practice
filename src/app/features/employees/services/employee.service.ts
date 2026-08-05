@@ -1,153 +1,60 @@
-/**
- * ═══════════════════════════════════════════════════════════════════
- * EMPLOYEE SERVICE — Data Access Layer with Mock Data
- * ═══════════════════════════════════════════════════════════════════
- *
- * EXPLANATION:
- * ─────────────
- * This service acts as the single source of truth for employee data.
- * Components should NEVER directly access MOCK_EMPLOYEES. Always go
- * through this service.
- *
- * WHY?
- * ─────
- * 1. **Encapsulation**: Data source can change without touching components
- * 2. **Consistency**: All components see the same data mutations
- * 3. **Testing**: Easy to mock this service in unit tests
- * 4. **Observable Pattern**: Maintains async contract even with sync data
- *
- * DEPENDENCY INJECTION:
- * ──────────────────────
- * The `inject()` function is Angular's new (v14+) functional DI API.
- * Alternative (older) approach:
- *
- *   constructor(private mockDataService: MockDataService) {}
- *
- * Modern approach (preferred in Angular 22):
- *
- *   private readonly mockDataService = inject(MockDataService);
- *
- * Benefits:
- * - More concise
- * - Works in functions, not just constructors
- * - Better tree-shaking
- * - Signals-friendly
- *
- * INTERVIEW QUESTION:
- * ────────────────────
- * Q: "Why use a service instead of importing MOCK_EMPLOYEES directly?"
- * A: "Services provide a layer of abstraction. When we switch to a real
- *     API, we only change this service. All components remain unchanged."
- */
-
 import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { Employee, CreateEmployeeDto, UpdateEmployeeDto } from '../models/employee.model';
-import { PagedResponse } from '../../../core/models/api-response.model';
-import { MockDataService } from '../../../core/services/mock-data.service';
-import { MOCK_EMPLOYEES } from '../data/mock-employees.data';
+import { environment } from '../../../../environments/environment';
+import { ApiResponse, PagedResponse } from '../../../core/models/api-response.model';
+import {
+  CreateEmployeeDto,
+  Employee,
+  EmployeeListFilter,
+  UpdateEmployeeDto
+} from '../models/employee.model';
+
+function buildParams(filter: EmployeeListFilter): HttpParams {
+  let params = new HttpParams();
+  for (const [key, value] of Object.entries(filter)) {
+    if (value !== undefined && value !== null && value !== '') {
+      params = params.set(key, String(value));
+    }
+  }
+  return params;
+}
 
 @Injectable({ providedIn: 'root' })
 export class EmployeeService {
-  private readonly mockService = inject(MockDataService);
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = `${environment.apiUrl}/employees`;
 
-  /**
-   * In-memory data store. Shared across all instances.
-   * In real app, this would be the backend database.
-   */
-  private employees = [...MOCK_EMPLOYEES];
-
-  /**
-   * GET ALL with Pagination
-   * ────────────────────────
-   * Returns a page of employees with metadata.
-   * Even though data is in-memory, we simulate paging
-   * to match real API behavior.
-   */
-  getAll(page = 1, pageSize = 20): Observable<PagedResponse<Employee>> {
-    return this.mockService.getAll(this.employees).pipe(
-      map(allEmployees => {
-        const startIndex = (page - 1) * pageSize;
-        const endIndex = startIndex + pageSize;
-        const paged = allEmployees.slice(startIndex, endIndex);
-
-        return {
-          data: paged,
-          totalCount: allEmployees.length,
-          pageNumber: page,
-          pageSize: pageSize,
-          totalPages: Math.ceil(allEmployees.length / pageSize),
-          message: 'Employees retrieved successfully',
-          success: true,
-          statusCode: 200
-        };
-      })
-    );
+  getAll(filter: EmployeeListFilter = { page: 1, pageSize: 20 }): Observable<PagedResponse<Employee>> {
+    return this.http.get<PagedResponse<Employee>>(this.baseUrl, { params: buildParams(filter) });
   }
 
-  /**
-   * GET BY ID
-   * ──────────
-   * Returns single employee or error if not found.
-   */
   getById(id: number): Observable<Employee> {
-    return this.mockService.getById(this.employees, id);
+    return this.http
+      .get<ApiResponse<Employee>>(`${this.baseUrl}/${id}`)
+      .pipe(map(res => res.data));
   }
 
-  /**
-   * CREATE
-   * ───────
-   * Adds new employee. Backend would generate ID; we simulate it.
-   */
   create(dto: CreateEmployeeDto): Observable<Employee> {
-    const newEmployee: Partial<Employee> = {
-      ...dto,
-      employeeCode: `EMP${String(this.employees.length + 1).padStart(3, '0')}`,
-      isActive: true
-    };
-    return this.mockService.create(this.employees, newEmployee);
+    return this.http
+      .post<ApiResponse<Employee>>(this.baseUrl, dto)
+      .pipe(map(res => res.data));
   }
 
-  /**
-   * UPDATE
-   * ───────
-   * Partial update of existing employee.
-   */
   update(id: number, dto: UpdateEmployeeDto): Observable<Employee> {
-    return this.mockService.update(this.employees, id, dto);
+    return this.http
+      .put<ApiResponse<Employee>>(`${this.baseUrl}/${id}`, dto)
+      .pipe(map(res => res.data));
   }
 
-  /**
-   * DELETE
-   * ───────
-   * Soft or hard delete. Here we do hard delete (remove from array).
-   * Production apps often use soft delete (set isActive = false).
-   */
   delete(id: number): Observable<void> {
-    return this.mockService.delete(this.employees, id);
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
-  /**
-   * SEARCH
-   * ───────
-   * Case-insensitive search across multiple fields.
-   * In real app, backend would handle this with SQL LIKE or full-text search.
-   */
+  /** Typeahead search — GET /employees/search?q=, capped at 20 results server-side, unpaginated. */
   search(query: string): Observable<Employee[]> {
-    return this.mockService.search(
-      this.employees,
-      query,
-      (emp, q) => {
-        const searchable = [
-          emp.firstName,
-          emp.lastName,
-          emp.email,
-          emp.employeeCode,
-          emp.department,
-          emp.jobTitle
-        ].join(' ').toLowerCase();
-        return searchable.includes(q);
-      }
-    );
+    return this.http
+      .get<ApiResponse<Employee[]>>(`${this.baseUrl}/search`, { params: new HttpParams().set('q', query) })
+      .pipe(map(res => res.data));
   }
 }

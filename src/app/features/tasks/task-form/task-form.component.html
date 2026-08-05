@@ -69,7 +69,7 @@
                   formControlName="projectId"
                   [class.is-invalid]="isInvalid('projectId')">
                   <option [value]="0">Select Project</option>
-                  @for (proj of projects; track proj.id) {
+                  @for (proj of projects(); track proj.id) {
                     <option [value]="proj.id">{{ proj.name }}</option>
                   }
                 </select>
@@ -107,7 +107,7 @@
                   formControlName="assigneeId"
                   [class.is-invalid]="isInvalid('assigneeId')">
                   <option [value]="0">Select Assignee</option>
-                  @for (user of assignees; track user.id) {
+                  @for (user of assignees(); track user.id) {
                     <option [value]="user.id">{{ user.name }}</option>
                   }
                 </select>

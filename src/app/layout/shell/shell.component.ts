@@ -4,18 +4,23 @@ import { filter } from 'rxjs';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { FooterComponent } from '../footer/footer.component';
+import { ToastComponent } from '../../shared/components/toast/toast.component';
+import { ErrorHandlerService } from '../../core/services/error-handler.service';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, NavbarComponent, SidebarComponent, FooterComponent],
+  imports: [RouterOutlet, NavbarComponent, SidebarComponent, FooterComponent, ToastComponent],
   templateUrl: './shell.component.html'
 })
 export class ShellComponent {
   private readonly router         = inject(Router);
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly destroyRef     = inject(DestroyRef);
+  private readonly errorHandler   = inject(ErrorHandlerService);
+
+  protected readonly errorNotice = this.errorHandler.notice;
 
   // ── Responsive state ─────────────────────────────────────────────────────────
   /** true when viewport < 992px (Bootstrap lg breakpoint) */

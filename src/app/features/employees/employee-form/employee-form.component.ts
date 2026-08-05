@@ -3,7 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { EmployeeService } from '../services/employee.service';
 import { EmployeeStore } from '../store/employee.store';
-import { CreateEmployeeDto } from '../models/employee.model';
+import { CreateEmployeeDto, UpdateEmployeeDto } from '../models/employee.model';
 
 @Component({
   selector: 'app-employee-form',
@@ -23,6 +23,9 @@ export class EmployeeFormComponent implements OnInit {
   protected readonly loading    = signal(false);
   protected readonly error      = signal<string | null>(null);
   private editId = 0;
+  // UpdateEmployeeDto requires isActive, which this form has no field for (preserves the
+  // existing UI exactly) — captured from the loaded record and passed through unchanged.
+  private currentIsActive = true;
 
   protected readonly form = this.fb.group({
     firstName:    ['', Validators.required],
@@ -41,7 +44,10 @@ export class EmployeeFormComponent implements OnInit {
       this.isEditMode.set(true);
       this.editId = Number(id);
       this.employeeService.getById(this.editId).subscribe({
-        next: emp  => this.form.patchValue(emp),
+        next: emp  => {
+          this.currentIsActive = emp.isActive;
+          this.form.patchValue(emp);
+        },
         error: (err: Error) => this.error.set(err.message)
       });
     }
@@ -78,7 +84,7 @@ export class EmployeeFormComponent implements OnInit {
     };
 
     const request$ = this.isEditMode()
-      ? this.employeeService.update(this.editId, dto)
+      ? this.employeeService.update(this.editId, { ...dto, isActive: this.currentIsActive } satisfies UpdateEmployeeDto)
       : this.employeeService.create(dto);
 
     request$.subscribe({

@@ -4,7 +4,8 @@ export interface Payroll {
   id: number;
   employeeId: number;
   employeeName: string;
-  department: string;
+  employeeCode: string;
+  departmentName: string;
   periodStart: string;
   periodEnd: string;
   grossSalary: number;
@@ -12,4 +13,24 @@ export interface Payroll {
   netSalary: number;
   status: PayrollStatus;
   processedAt: string | null;
+  processedBy: number | null;
+  processedByName: string | null;
+}
+
+export interface GeneratePayrollRequest {
+  periodStart: string;
+  periodEnd: string;
+}
+
+export interface GeneratePayrollResultDto {
+  generatedCount: number;
+  skippedCount: number;
+}
+
+export interface PayrollListFilter {
+  page?: number;
+  pageSize?: number;
+  status?: PayrollStatus;
+  periodStart?: string;
+  periodEnd?: string;
 }

@@ -3,6 +3,7 @@ import { RouterModule } from '@angular/router';
 import { TaskService } from '../services/task.service';
 import { Task, TaskStatus } from '../models/task.model';
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
+import { AuthService } from '../../../core/services/auth.service';
 
 const COLUMNS: Array<{ status: TaskStatus; label: string; icon: string; color: string }> = [
   { status: 'Todo',       label: 'To Do',       icon: 'bi-circle',            color: 'border-secondary' },
@@ -20,6 +21,10 @@ const COLUMNS: Array<{ status: TaskStatus; label: string; icon: string; color: s
 })
 export class TaskBoardComponent implements OnInit {
   private readonly taskService = inject(TaskService);
+  private readonly authService = inject(AuthService);
+
+  /** Admin/Manager per §13 — same role-only gate as the task list/detail screens. */
+  protected readonly canManageTasks = ['Admin', 'Manager'].includes(this.authService.getUserRole());
 
   protected readonly allTasks = signal<Task[]>([]);
   protected readonly loading  = signal(true);

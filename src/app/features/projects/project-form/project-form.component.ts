@@ -70,7 +70,8 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ProjectService } from '../services/project.service';
 import { ProjectStore } from '../store/project.store';
-import { CreateProjectDto, ProjectPriority } from '../models/project.model';
+import { CreateProjectDto, ProjectPriority, ProjectStatus, UpdateProjectDto } from '../models/project.model';
+import { EmployeeService } from '../../employees/services/employee.service';
 
 @Component({
   selector: 'app-project-form',
@@ -83,11 +84,12 @@ export class ProjectFormComponent implements OnInit {
   // ═══════════════════════════════════════════════════════════════════
   // DEPENDENCY INJECTION
   // ═══════════════════════════════════════════════════════════════════
-  private readonly fb             = inject(FormBuilder);
-  private readonly projectService = inject(ProjectService);
-  private readonly store          = inject(ProjectStore);
-  private readonly route          = inject(ActivatedRoute);
-  private readonly router         = inject(Router);
+  private readonly fb              = inject(FormBuilder);
+  private readonly projectService  = inject(ProjectService);
+  private readonly employeeService = inject(EmployeeService);
+  private readonly store           = inject(ProjectStore);
+  private readonly route           = inject(ActivatedRoute);
+  private readonly router          = inject(Router);
 
   // ═══════════════════════════════════════════════════════════════════
   // COMPONENT STATE
@@ -96,20 +98,17 @@ export class ProjectFormComponent implements OnInit {
   protected readonly loading    = signal(false);
   protected readonly error      = signal<string | null>(null);
   private editId = 0;
+  // UpdateProjectDto requires status/progress/spent, which this form has no fields for
+  // (preserves the existing UI exactly) — captured from the loaded record and passed through
+  // unchanged, same pattern as EmployeeFormComponent.currentIsActive.
+  private current: { status: ProjectStatus; progress: number; spent: number; tags: string[] } = {
+    status: 'Active', progress: 0, spent: 0, tags: []
+  };
 
   // Priority options for dropdown
   protected readonly priorities: ProjectPriority[] = ['Low', 'Medium', 'High', 'Critical'];
 
-  // Mock manager options (in real app, would come from API)
-  protected readonly managers = [
-    { id: 1, name: 'Sarah Johnson' },
-    { id: 2, name: 'Michael Chen' },
-    { id: 5, name: 'Jessica Martinez' },
-    { id: 7, name: 'Amanda White' },
-    { id: 10, name: 'Christopher Garcia' },
-    { id: 13, name: 'Rachel Wilson' },
-    { id: 16, name: 'Matthew Martinez' }
-  ];
+  protected readonly managers = signal<{ id: number; name: string }[]>([]);
 
   // ═══════════════════════════════════════════════════════════════════
   // REACTIVE FORM DEFINITION
@@ -149,6 +148,10 @@ export class ProjectFormComponent implements OnInit {
    * 2. If yes, fetch existing project and populate form
    */
   ngOnInit(): void {
+    this.employeeService.getAll({ page: 1, pageSize: 100, isActive: true }).subscribe({
+      next: res => this.managers.set(res.data.map(e => ({ id: e.id, name: `${e.firstName} ${e.lastName}` })))
+    });
+
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.isEditMode.set(true);
@@ -168,6 +171,7 @@ export class ProjectFormComponent implements OnInit {
     this.loading.set(true);
     this.projectService.getById(this.editId).subscribe({
       next: proj => {
+        this.current = { status: proj.status, progress: proj.progress, spent: proj.spent, tags: proj.tags };
         // patchValue updates only the fields we provide
         // setValue requires ALL fields
         this.form.patchValue({
@@ -266,7 +270,7 @@ export class ProjectFormComponent implements OnInit {
 
     // Step 4: Determine operation (create vs update)
     const request$ = this.isEditMode()
-      ? this.projectService.update(this.editId, dto)
+      ? this.projectService.update(this.editId, { ...dto, ...this.current } satisfies UpdateProjectDto)
       : this.projectService.create(dto);
 
     // Step 5: Execute and handle response

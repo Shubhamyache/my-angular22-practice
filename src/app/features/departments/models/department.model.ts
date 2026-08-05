@@ -3,14 +3,17 @@ export interface Department {
   name: string;
   code: string;
   managerId: number | null;
-  managerName?: string;
-  employeeCount: number;
+  managerName: string | null;
   isActive: boolean;
-  createdAt: string;
+  employeeCount: number;
 }
 
 export interface CreateDepartmentDto {
   name: string;
   code: string;
-  managerId?: number;
+  managerId: number | null;
+}
+
+export interface UpdateDepartmentDto extends CreateDepartmentDto {
+  isActive: boolean;
 }

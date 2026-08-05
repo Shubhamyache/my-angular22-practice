@@ -35,7 +35,7 @@ export class EmployeeStore {
     this._loading.set(true);
     this._error.set(null);
 
-    this.employeeService.getAll(page).subscribe({
+    this.employeeService.getAll({ page, pageSize: 20 }).subscribe({
       next: res => {
         this._employees.set(res.data);
         this._totalCount.set(res.totalCount);
