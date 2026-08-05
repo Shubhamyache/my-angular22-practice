@@ -1,5 +1,5 @@
-/** §8 of FeaturesToImplement.md — `/settings/general` doesn't exist yet. PUT is Admin-only
- *  server-side; the route is already role-gated in settings.routes.ts. */
+/** §8 of PartTwoUIIntegration.md. GET is any authenticated user; PUT is Admin-only server-side —
+ *  GeneralSettingsComponent disables the form for non-Admins rather than gating the route. */
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';

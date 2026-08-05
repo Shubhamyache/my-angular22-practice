@@ -81,19 +81,8 @@
         <i class="bi bi-search fs-5"></i>
       </button>
 
-      <!-- Notification bell with badge -->
-      <button
-        class="btn btn-link text-secondary p-1 lh-1 position-relative"
-        title="Notifications">
-        <i class="bi bi-bell fs-5"></i>
-        @if (notificationCount() > 0) {
-          <span
-            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-            style="font-size:0.55rem; padding: 3px 5px;">
-            {{ notificationCount() }}
-          </span>
-        }
-      </button>
+      <!-- Notification bell with real unread-count + dropdown panel -->
+      <app-notification-bell />
 
       <!-- User info (hidden on small screens) -->
       <div class="d-none d-md-flex align-items-center gap-2 mx-2 ps-2 border-start border-secondary">

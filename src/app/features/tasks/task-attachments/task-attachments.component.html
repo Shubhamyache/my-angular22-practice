@@ -1,0 +1,70 @@
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+    <h5 class="mb-0 fw-semibold">
+      <i class="bi bi-paperclip me-2 text-secondary"></i>Attachments
+      @if (!loading()) {
+        <span class="badge bg-light text-dark border ms-2">{{ attachments().length }}</span>
+      }
+    </h5>
+    <input #fileInput type="file" class="d-none" (change)="onFileSelected($event)" />
+    <button class="btn btn-outline-primary btn-sm" [disabled]="uploading()" (click)="fileInput.click()">
+      @if (uploading()) {
+        <span class="spinner-border spinner-border-sm me-1"></span>Uploading…
+      } @else {
+        <i class="bi bi-upload me-1"></i>Attach File
+      }
+    </button>
+  </div>
+  <div class="card-body">
+
+    @if (error()) {
+      <div class="alert alert-danger alert-dismissible py-2 small">
+        {{ error() }}
+        <button type="button" class="btn-close" (click)="error.set(null)"></button>
+      </div>
+    }
+
+    @if (loading()) {
+      <div class="text-center text-muted py-3">
+        <span class="spinner-border spinner-border-sm me-2"></span>Loading attachments…
+      </div>
+    } @else if (attachments().length === 0) {
+      <p class="text-muted small mb-0">No files attached yet.</p>
+    } @else {
+      <ul class="list-group list-group-flush">
+        @for (file of attachments(); track file.id) {
+          <li class="list-group-item d-flex align-items-center justify-content-between px-0">
+            <div class="d-flex align-items-center gap-2 overflow-hidden">
+              <i [class]="'bi ' + iconFor(file.contentType) + ' fs-5 text-muted flex-shrink-0'"></i>
+              <div class="text-truncate">
+                <div class="small fw-semibold text-truncate">{{ file.fileName }}</div>
+                <div class="text-muted" style="font-size:0.7rem;">
+                  {{ formatSize(file.fileSizeBytes) }} · {{ file.uploadedByName }} · {{ file.uploadedAt | date:'short' }}
+                </div>
+              </div>
+            </div>
+            <div class="d-flex gap-1 flex-shrink-0">
+              <button class="btn btn-sm btn-outline-primary" [disabled]="downloadingId() === file.id" (click)="download(file)" title="Download">
+                @if (downloadingId() === file.id) {
+                  <span class="spinner-border spinner-border-sm"></span>
+                } @else {
+                  <i class="bi bi-download"></i>
+                }
+              </button>
+              @if (canDelete(file)) {
+                <button class="btn btn-sm btn-outline-danger" [disabled]="deletingId() === file.id" (click)="deleteAttachment(file)" title="Delete">
+                  @if (deletingId() === file.id) {
+                    <span class="spinner-border spinner-border-sm"></span>
+                  } @else {
+                    <i class="bi bi-trash"></i>
+                  }
+                </button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    }
+
+  </div>
+</div>

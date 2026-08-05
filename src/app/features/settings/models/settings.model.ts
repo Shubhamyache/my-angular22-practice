@@ -1,9 +1,7 @@
 /**
  * DTOs for the Settings screens — Profile, Security, Notification Preferences, User
- * Preferences, and admin General Settings. None of these endpoints exist on the backend yet;
- * these types match the contract proposed in FeaturesToImplement.md exactly (§1, §3, §5–§8), so
- * the services below need zero changes once the backend ships them — see that doc for the full
- * spec, validation rules, and role gates.
+ * Preferences, and admin General Settings. All of these now exist on the backend
+ * (PartTwoUIIntegration.md §1, §3, §5–§8) — these types match that contract exactly.
  */
 
 // ── §1 Profile ────────────────────────────────────────────────────────────
@@ -23,10 +21,22 @@ export interface UpdateUserProfileDto {
   jobTitle: string | null;
 }
 
+/** Response of POST /users/me/avatar (PartTwoUIIntegration.md §2) — avatarUrl is a relative
+ *  path (e.g. "/uploads/avatars/3f2a....png"), not an absolute URL. */
+export interface AvatarUploadResult {
+  avatarUrl: string;
+}
+
 // ── §3 Change password ───────────────────────────────────────────────────
 export interface ChangePasswordDto {
   currentPassword: string;
   newPassword: string;
+}
+
+// ── §4 Two-factor authentication ─────────────────────────────────────────
+export interface TwoFactorSetupDto {
+  secret: string;
+  qrCodeUri: string;
 }
 
 // ── §5 Active sessions ───────────────────────────────────────────────────

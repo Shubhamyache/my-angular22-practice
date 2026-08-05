@@ -1,4 +1,4 @@
-/** §6 of FeaturesToImplement.md — `/users/me/notification-preferences` doesn't exist yet. */
+/** §6 of PartTwoUIIntegration.md. Self-seeds all six default rows on first GET for a user. */
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';

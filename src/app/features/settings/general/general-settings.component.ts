@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { GeneralSettingsService } from '../services/general-settings.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-general-settings',
@@ -12,36 +13,45 @@ import { GeneralSettingsService } from '../services/general-settings.service';
 export class GeneralSettingsComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly generalSettingsService = inject(GeneralSettingsService);
+  private readonly authService = inject(AuthService);
+
+  /** View is any authenticated user, edit is Admin-only (PartTwoUIIntegration.md §8) — the
+   *  route itself is open to everyone now, this component enforces the write boundary. */
+  protected readonly canEdit = this.authService.getUserRole() === 'Admin';
 
   protected readonly form = this.fb.group({
-    appName:    ['Employee Management System', Validators.required],
-    timezone:   ['UTC'],
-    dateFormat: ['MM/DD/YYYY'],
-    pageSize:   [20]
+    appName:    [{ value: 'Employee Management System', disabled: !this.canEdit }, Validators.required],
+    timezone:   [{ value: 'UTC', disabled: !this.canEdit }],
+    dateFormat: [{ value: 'MM/DD/YYYY', disabled: !this.canEdit }],
+    pageSize:   [{ value: 20, disabled: !this.canEdit }]
   });
 
   private readonly defaults = this.form.getRawValue();
 
+  protected readonly loading = signal(true);
   protected readonly saving  = signal(false);
   protected readonly saved   = signal(false);
-  /** True once GET /settings/general is confirmed missing — see FeaturesToImplement.md §8. */
-  protected readonly backendMissing = signal(false);
+  protected readonly error   = signal<string | null>(null);
 
   ngOnInit(): void {
     this.generalSettingsService.getSettings().subscribe({
-      next: settings => this.form.patchValue(settings),
-      error: () => this.backendMissing.set(true)
+      next: settings => {
+        this.form.patchValue(settings);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false)
     });
   }
 
   onSubmit(): void {
-    if (this.form.invalid) {
+    if (!this.canEdit || this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
 
     this.saving.set(true);
     this.saved.set(false);
+    this.error.set(null);
 
     const raw = this.form.getRawValue();
     this.generalSettingsService.updateSettings({
@@ -55,15 +65,15 @@ export class GeneralSettingsComponent implements OnInit {
         this.saved.set(true);
         setTimeout(() => this.saved.set(false), 3000);
       },
-      error: () => {
-        this.backendMissing.set(true);
+      error: (err: Error) => {
+        this.error.set(err.message);
         this.saving.set(false);
       }
     });
   }
 
   onResetDefaults(): void {
-    if (confirm('Reset all settings to default values?')) {
+    if (this.canEdit && confirm('Reset all settings to default values?')) {
       this.form.reset(this.defaults);
     }
   }

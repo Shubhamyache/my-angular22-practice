@@ -15,12 +15,14 @@ import { TaskService } from '../services/task.service';
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
 import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 import { AuthService } from '../../../core/services/auth.service';
+import { TaskCommentsComponent } from '../task-comments/task-comments.component';
+import { TaskAttachmentsComponent } from '../task-attachments/task-attachments.component';
 
 @Component({
   selector: 'app-task-detail',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterModule, LoaderComponent, DateFormatPipe],
+  imports: [RouterModule, LoaderComponent, DateFormatPipe, TaskCommentsComponent, TaskAttachmentsComponent],
   templateUrl: './task-detail.component.html'
 })
 export class TaskDetailComponent implements OnInit {

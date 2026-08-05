@@ -103,6 +103,14 @@ export const routes: Routes = [
           import('./features/reports/reports.routes').then(r => r.REPORT_ROUTES)
       },
 
+      // ── Notifications (reached mainly via the navbar bell's "View All") ──
+      {
+        path: 'notifications',
+        data: { title: 'Notifications', icon: 'bi-bell-fill' },
+        loadChildren: () =>
+          import('./features/notifications/notifications.routes').then(r => r.NOTIFICATION_ROUTES)
+      },
+
       // ── Settings (nested router-outlet: /settings/general etc.) ───────────
       // Demonstrates two-level router-outlet nesting.
       // SettingsShellComponent has its OWN <router-outlet> inside it.

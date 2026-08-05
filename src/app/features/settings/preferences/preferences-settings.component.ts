@@ -52,8 +52,6 @@ export class PreferencesSettingsComponent implements OnInit {
 
   protected readonly saving = signal(false);
   protected readonly saveSuccess = signal(false);
-  /** True once GET /users/me/preferences is confirmed missing — see FeaturesToImplement.md §7. */
-  protected readonly backendMissing = signal(false);
 
   /**
    * REACTIVE FORM WITH TYPED CONTROLS
@@ -106,8 +104,9 @@ export class PreferencesSettingsComponent implements OnInit {
   /**
    * Loads previously-saved preferences. Reads localStorage first (fixes a pre-existing gap —
    * onSubmit wrote to localStorage but nothing ever read it back, so preferences never actually
-   * survived a page reload), then tries GET /users/me/preferences (§7 of
-   * FeaturesToImplement.md — doesn't exist yet) to override with the backend copy once it does.
+   * survived a page reload), then GET /users/me/preferences overrides with the backend's copy
+   * (self-seeded with server defaults on first read, PartTwoUIIntegration.md §7) — that's the
+   * real source of truth once it resolves.
    */
   ngOnInit(): void {
     const stored = localStorage.getItem('userPreferences');
@@ -123,8 +122,7 @@ export class PreferencesSettingsComponent implements OnInit {
     // integration pass, so patchValue()/getRawValue() below are cast at the boundary rather
     // than fighting FormGroup<any>'s inferred `{[x: string]: unknown}` shape.
     this.userPreferencesService.getPreferences().subscribe({
-      next: prefs => this.form.patchValue(prefs as unknown as Record<string, unknown>),
-      error: () => this.backendMissing.set(true)
+      next: prefs => this.form.patchValue(prefs as unknown as Record<string, unknown>)
     });
   }
 
@@ -149,9 +147,8 @@ export class PreferencesSettingsComponent implements OnInit {
     this.userPreferencesService.updatePreferences(values as unknown as UserPreferencesDto).subscribe({
       next: () => this.finishSave(),
       error: () => {
-        // No backend yet (§7) — localStorage write above already happened, so from the user's
-        // perspective on this device the save still "worked"; just flag the gap for next load.
-        this.backendMissing.set(true);
+        // The localStorage write above already happened regardless, so the save still "worked"
+        // from this device's perspective even if the PUT itself failed transiently.
         this.finishSave();
       }
     });

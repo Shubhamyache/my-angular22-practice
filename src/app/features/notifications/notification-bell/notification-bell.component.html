@@ -1,0 +1,63 @@
+<div class="position-relative">
+  <button
+    class="btn btn-link text-secondary p-1 lh-1 position-relative"
+    title="Notifications"
+    (click)="toggle()">
+    <i class="bi bi-bell fs-5"></i>
+    @if (unreadCount() > 0) {
+      <span
+        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+        style="font-size:0.55rem; padding: 3px 5px;">
+        {{ unreadCount() > 99 ? '99+' : unreadCount() }}
+      </span>
+    }
+  </button>
+
+  @if (open()) {
+    <div class="card shadow-lg border-0 position-absolute end-0 mt-2"
+      style="width: 340px; max-height: 420px; z-index: 1060; top: 100%;">
+      <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+        <span class="fw-semibold small">Notifications</span>
+        @if (unreadCount() > 0) {
+          <button type="button" class="btn btn-link btn-sm p-0 small" (click)="markAllRead()">Mark all read</button>
+        }
+      </div>
+      <div class="card-body p-0 overflow-auto" style="max-height: 320px;">
+        @if (loading()) {
+          <div class="text-center text-muted py-4 small">
+            <span class="spinner-border spinner-border-sm me-2"></span>Loading…
+          </div>
+        } @else if (recent().length === 0) {
+          <div class="text-center text-muted py-4 small">
+            <i class="bi bi-bell-slash d-block fs-4 mb-1 opacity-50"></i>
+            No notifications yet.
+          </div>
+        } @else {
+          <ul class="list-group list-group-flush">
+            @for (n of recent(); track n.id) {
+              <li
+                class="list-group-item small"
+                style="cursor: pointer;"
+                [class.bg-light]="!n.isRead"
+                (click)="onNotificationClick(n)">
+                <div class="d-flex align-items-start gap-2">
+                  @if (!n.isRead) {
+                    <span class="bg-primary rounded-circle flex-shrink-0 mt-1" style="width:6px;height:6px;"></span>
+                  }
+                  <div class="flex-grow-1 overflow-hidden">
+                    <div class="fw-semibold text-truncate" [class.fw-normal]="n.isRead">{{ n.title }}</div>
+                    <div class="text-muted text-truncate">{{ n.message }}</div>
+                    <div class="text-muted" style="font-size:0.7rem;">{{ n.createdAt | date:'short' }}</div>
+                  </div>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+      <div class="card-footer bg-white text-center py-2">
+        <a routerLink="/notifications" class="small" (click)="open.set(false)">View All</a>
+      </div>
+    </div>
+  }
+</div>

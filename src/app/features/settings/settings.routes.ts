@@ -1,5 +1,4 @@
 import { Routes } from '@angular/router';
-import { roleGuard } from '../../core/guards/role.guard';
 
 /**
  * SETTINGS routes — demonstrates a SECOND-LEVEL nested router-outlet.
@@ -22,11 +21,11 @@ export const SETTINGS_ROUTES: Routes = [
       import('./settings-shell/settings-shell.component').then(c => c.SettingsShellComponent),
     children: [
       {
-        // Admin-only per UIIntegrationInfo.md §13 (app-wide config). Also has no backend
-        // endpoint yet at all — see §18 and general-settings.component.ts for the stub notice.
+        // View is open to any authenticated user; only the Save action inside the component is
+        // Admin-gated (PartTwoUIIntegration.md §8 — "don't gate the route itself, just the Save
+        // button/form submit for non-Admins"). GeneralSettingsComponent disables the form for
+        // non-Admins rather than the route refusing to render.
         path: 'general',
-        data: { roles: ['Admin'] },
-        canActivate: [roleGuard],
         loadComponent: () =>
           import('./general/general-settings.component').then(c => c.GeneralSettingsComponent)
       },
@@ -50,9 +49,8 @@ export const SETTINGS_ROUTES: Routes = [
         loadComponent: () =>
           import('./preferences/preferences-settings.component').then(c => c.PreferencesSettingsComponent)
       },
-      // 'profile' (not 'general') — General is Admin-only (roleGuard above), so redirecting
-      // here would silently bounce every non-Admin who clicks "Settings" in the sidebar
-      // straight back to /dashboard with no explanation. Profile is open to every role.
+      // 'profile' — a reasonable default landing tab for every role now that General no longer
+      // route-guards non-Admins away (it renders read-only for them instead, see above).
       { path: '', redirectTo: 'profile', pathMatch: 'full' }
     ]
   }

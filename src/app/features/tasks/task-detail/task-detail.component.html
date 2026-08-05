@@ -114,6 +114,9 @@
 
           </div>
         </div>
+
+        <app-task-comments [taskId]="t.id" />
+        <app-task-attachments [taskId]="t.id" />
       </div>
 
       <!-- Sidebar -->
@@ -176,14 +179,6 @@
               } @else {
                 <i class="bi bi-clock-history me-2"></i>Log Time
               }
-            </button>
-            <button class="btn btn-outline-info" disabled
-              title="Task comments aren't available yet — see FeaturesToImplement.md §10">
-              <i class="bi bi-chat-dots me-2"></i>Add Comment
-            </button>
-            <button class="btn btn-outline-secondary" disabled
-              title="Task attachments aren't available yet — see FeaturesToImplement.md §11">
-              <i class="bi bi-paperclip me-2"></i>Attach File
             </button>
           </div>
         </div>

@@ -2,12 +2,13 @@ import { ChangeDetectionStrategy, Component, inject, input, output, signal } fro
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { AuthFeatureService } from '../../features/auth/services/auth-feature.service';
+import { NotificationBellComponent } from '../../features/notifications/notification-bell/notification-bell.component';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterModule],
+  imports: [RouterModule, NotificationBellComponent],
   templateUrl: './navbar.component.html'
 })
 export class NavbarComponent {
@@ -22,11 +23,7 @@ export class NavbarComponent {
   private readonly authFeatureService = inject(AuthFeatureService);
 
   // ── Local UI state ────────────────────────────────────────────────────────
-  protected readonly searchOpen       = signal(false);
-  // Static placeholder — there is no Notifications backend yet (UIIntegrationInfo.md §18), so
-  // this badge does not reflect real unread-notification data. Left as-is (decorative, not
-  // wired to any API call) rather than hidden, per the migration's "stub, don't delete" guidance.
-  protected readonly notificationCount = signal(4);
+  protected readonly searchOpen = signal(false);
 
   toggleMenu(): void  { this.menuToggled.emit(); }
   toggleSearch(): void { this.searchOpen.update(v => !v); }

@@ -10,9 +10,8 @@ interface NotificationPref {
   inApp:   boolean;
 }
 
-/** Seed defaults — used until GET /users/me/notification-preferences (§6) exists; matches the
- *  defaults documented in FeaturesToImplement.md §6 exactly, so nothing changes here once the
- *  backend seeds real per-user rows. */
+/** Initial render state before GET resolves — matches the backend's own self-seeding defaults
+ *  exactly (PartTwoUIIntegration.md §6), so there's no visible flash/mismatch on first load. */
 const DEFAULT_PREFS: NotificationPref[] = [
   { id: 'newEmp',    label: 'New Employee Added',     detail: 'When HR adds a new employee record',        email: true,  inApp: true  },
   { id: 'payroll',   label: 'Payroll Processed',      detail: 'When monthly payroll run completes',        email: true,  inApp: true  },
@@ -32,10 +31,10 @@ export class NotificationsSettingsComponent implements OnInit {
   private readonly notificationPreferencesService = inject(NotificationPreferencesService);
 
   protected readonly prefs   = signal<NotificationPref[]>(DEFAULT_PREFS);
+  protected readonly loading = signal(true);
   protected readonly saving  = signal(false);
   protected readonly saved   = signal(false);
-  /** True once GET is confirmed missing — see FeaturesToImplement.md §6. */
-  protected readonly backendMissing = signal(false);
+  protected readonly error   = signal<string | null>(null);
 
   ngOnInit(): void {
     this.notificationPreferencesService.getPreferences().subscribe({
@@ -46,8 +45,12 @@ export class NotificationsSettingsComponent implements OnInit {
             return dto ? { ...p, email: dto.email, inApp: dto.inApp } : p;
           })
         );
+        this.loading.set(false);
       },
-      error: () => this.backendMissing.set(true)
+      error: (err: Error) => {
+        this.error.set(err.message);
+        this.loading.set(false);
+      }
     });
   }
 
@@ -71,8 +74,8 @@ export class NotificationsSettingsComponent implements OnInit {
         this.saved.set(true);
         setTimeout(() => this.saved.set(false), 3000);
       },
-      error: () => {
-        this.backendMissing.set(true);
+      error: (err: Error) => {
+        this.error.set(err.message);
         this.saving.set(false);
       }
     });

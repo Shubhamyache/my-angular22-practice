@@ -1,0 +1,83 @@
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-white border-bottom">
+    <h5 class="mb-0 fw-semibold">
+      <i class="bi bi-chat-dots me-2 text-info"></i>Comments
+      @if (!loading()) {
+        <span class="badge bg-light text-dark border ms-2">{{ comments().length }}</span>
+      }
+    </h5>
+  </div>
+  <div class="card-body">
+
+    @if (error()) {
+      <div class="alert alert-danger alert-dismissible py-2 small">
+        {{ error() }}
+        <button type="button" class="btn-close" (click)="error.set(null)"></button>
+      </div>
+    }
+
+    @if (loading()) {
+      <div class="text-center text-muted py-3">
+        <span class="spinner-border spinner-border-sm me-2"></span>Loading comments…
+      </div>
+    } @else {
+
+      @if (comments().length === 0) {
+        <p class="text-muted small mb-3">No comments yet — be the first to add one.</p>
+      } @else {
+        <div class="d-flex flex-column gap-3 mb-4">
+          @for (comment of comments(); track comment.id) {
+            <div class="d-flex gap-2">
+              <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center flex-shrink-0"
+                style="width:32px;height:32px;font-size:0.75rem;font-weight:700;">
+                {{ comment.authorName.split(' ').map(n => n[0]).join('').slice(0, 2) }}
+              </div>
+              <div class="flex-grow-1">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="fw-semibold small">{{ comment.authorName }}</span>
+                  <span class="text-muted" style="font-size:0.75rem;">{{ comment.createdAt | date:'short' }}</span>
+                  @if (canDelete(comment)) {
+                    <button
+                      class="btn btn-link btn-sm text-danger p-0 ms-auto"
+                      style="font-size:0.75rem;"
+                      [disabled]="deletingId() === comment.id"
+                      (click)="deleteComment(comment)">
+                      @if (deletingId() === comment.id) {
+                        <span class="spinner-border spinner-border-sm"></span>
+                      } @else {
+                        Delete
+                      }
+                    </button>
+                  }
+                </div>
+                <!-- Rendered as plain text (no innerHTML) — comment text is untrusted input,
+                     Angular interpolation escapes it automatically. -->
+                <p class="mb-0 small" style="white-space: pre-wrap;">{{ comment.text }}</p>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <div class="d-flex gap-2 align-items-start">
+        <textarea
+          class="form-control form-control-sm"
+          rows="2"
+          [attr.maxlength]="maxLength"
+          placeholder="Add a comment…"
+          [value]="draft()"
+          (input)="draft.set($any($event.target).value)"></textarea>
+        <button class="btn btn-primary btn-sm flex-shrink-0" [disabled]="!draft().trim() || posting()" (click)="addComment()">
+          @if (posting()) {
+            <span class="spinner-border spinner-border-sm"></span>
+          } @else {
+            <i class="bi bi-send"></i>
+          }
+        </button>
+      </div>
+      <small class="text-muted">{{ draft().length }}/{{ maxLength }}</small>
+
+    }
+
+  </div>
+</div>

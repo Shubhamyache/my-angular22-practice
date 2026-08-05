@@ -1,5 +1,5 @@
-/** §7 of FeaturesToImplement.md — `/users/me/preferences` doesn't exist yet; the app keeps
- *  writing to localStorage as a fallback either way (see PreferencesSettingsComponent). */
+/** §7 of PartTwoUIIntegration.md. Self-seeds server defaults on first GET; the app also keeps a
+ *  localStorage copy as an optimistic local cache (see PreferencesSettingsComponent). */
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';

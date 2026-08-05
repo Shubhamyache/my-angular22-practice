@@ -1,17 +1,6 @@
 <h5 class="fw-bold mb-1">Security Settings</h5>
 <p class="text-muted small mb-3">Manage your password and authentication preferences</p>
 
-@if (backendMissing()) {
-  <!-- Password change + sessions are fully wired to PUT /users/me/password and
-       GET/DELETE /users/me/sessions (FeaturesToImplement.md §3/§5) — those just don't exist on
-       the backend yet. 2FA is intentionally NOT wired below; it needs a verify-code step the UI
-       doesn't have yet — see §4's "Angular readiness" note. -->
-  <div class="alert alert-secondary d-flex align-items-center gap-2 py-2 mb-4">
-    <i class="bi bi-tools flex-shrink-0"></i>
-    <small>Not yet connected to a backend — changes here aren't saved. See FeaturesToImplement.md §3–§5.</small>
-  </div>
-}
-
 <!-- Change password -->
 <div class="mb-4 pb-4 border-bottom">
   <h6 class="fw-semibold mb-3">Change Password</h6>
@@ -31,11 +20,19 @@
   <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
     <div class="mb-3">
       <label class="form-label fw-semibold small">Current Password</label>
-      <input formControlName="current" type="password" class="form-control" />
+      <input formControlName="current" type="password" class="form-control"
+        [class.is-invalid]="currentPasswordError()" />
+      @if (currentPasswordError()) {
+        <div class="invalid-feedback">{{ currentPasswordError() }}</div>
+      }
     </div>
     <div class="mb-3">
       <label class="form-label fw-semibold small">New Password</label>
-      <input formControlName="newPass" type="password" class="form-control" />
+      <input formControlName="newPass" type="password" class="form-control"
+        [class.is-invalid]="newPasswordError()" />
+      @if (newPasswordError()) {
+        <div class="invalid-feedback">{{ newPasswordError() }}</div>
+      }
     </div>
     <div class="mb-3">
       <label class="form-label fw-semibold small">Confirm New Password</label>
@@ -51,23 +48,34 @@
   </form>
 </div>
 
-<!-- 2FA toggle -->
+<!-- 2FA -->
 <div class="mb-4 pb-4 border-bottom">
   <div class="d-flex justify-content-between align-items-center">
     <div>
       <h6 class="fw-semibold mb-0">Two-Factor Authentication</h6>
-      <small class="text-muted">Add an extra layer of security to your account</small>
+      <small class="text-muted">
+        @if (twoFAEnabled()) {
+          <span class="text-success"><i class="bi bi-shield-check me-1"></i>Enabled</span>
+        } @else {
+          Add an extra layer of security to your account
+        }
+      </small>
     </div>
-    <div class="form-check form-switch" title="No backend endpoint yet — see FeaturesToImplement.md §4">
-      <input class="form-check-input" type="checkbox" [checked]="twoFAEnabled()" disabled
-        style="width:3em;height:1.5em;" />
-    </div>
+    <button
+      type="button"
+      [class]="twoFAEnabled() ? 'btn btn-outline-danger btn-sm' : 'btn btn-outline-primary btn-sm'"
+      (click)="openTwoFactorModal()">
+      {{ twoFAEnabled() ? 'Disable' : 'Enable' }}
+    </button>
   </div>
-  <small class="text-muted d-block mt-2">
-    <i class="bi bi-info-circle me-1"></i>Not available yet — real 2FA needs a setup/verify flow
-    the backend doesn't support yet. See FeaturesToImplement.md §4.
-  </small>
 </div>
+
+@if (twoFAModalOpen()) {
+  <app-two-factor-modal
+    [mode]="twoFactorModalMode()"
+    (changed)="onTwoFactorChanged($event)"
+    (closed)="twoFAModalOpen.set(false)" />
+}
 
 <!-- Active sessions -->
 <div>
@@ -75,20 +83,9 @@
 
   @if (sessionsLoading()) {
     <p class="text-muted small">Loading sessions…</p>
-  } @else if (backendMissing()) {
-    <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded">
-      <div class="d-flex align-items-center gap-3">
-        <i class="bi bi-laptop fs-4 text-muted"></i>
-        <div>
-          <div class="fw-semibold small">This device</div>
-          <small class="text-success">● Current session</small>
-        </div>
-      </div>
-      <button class="btn btn-outline-danger btn-sm" disabled title="No backend endpoint yet — see FeaturesToImplement.md §5">Revoke</button>
-    </div>
   } @else {
     <div class="d-flex flex-column gap-2">
-      @for (session of sessions(); track session.id) {
+      @for (session of visibleSessions(); track session.id) {
         <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded">
           <div class="d-flex align-items-center gap-3">
             <i class="bi bi-laptop fs-4 text-muted"></i>
@@ -116,5 +113,11 @@
         <p class="text-muted small mb-0">No active sessions found.</p>
       }
     </div>
+
+    @if (!showAllSessions() && sessions().length > visibleSessions().length) {
+      <button class="btn btn-link btn-sm px-0 mt-2" (click)="showAllSessions.set(true)">
+        Show all {{ sessions().length }} sessions
+      </button>
+    }
   }
 </div>

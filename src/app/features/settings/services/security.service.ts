@@ -1,16 +1,13 @@
 /**
- * §3 and §5 of FeaturesToImplement.md — change password + active sessions. None of these
- * endpoints exist yet; SecuritySettingsComponent calls these and handles the resulting 404
- * inline (UIIntegrationInfo.md §11). Two-factor auth (§4) is deliberately not wired here — the
- * UI needs a verify-code modal once `/2fa/setup` exists, which doesn't exist as a screen today,
- * see FeaturesToImplement.md §4's "Angular readiness" note.
+ * §3, §4, §5 of PartTwoUIIntegration.md — change password, two-factor auth, and active
+ * sessions. All live on the backend now.
  */
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { ApiResponse } from '../../../core/models/api-response.model';
-import { ChangePasswordDto, SessionDto } from '../models/settings.model';
+import { ChangePasswordDto, SessionDto, TwoFactorSetupDto } from '../models/settings.model';
 
 @Injectable({ providedIn: 'root' })
 export class SecurityService {
@@ -29,5 +26,21 @@ export class SecurityService {
 
   revokeSession(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/sessions/${id}`);
+  }
+
+  /** Starts (or restarts — a repeat call silently discards any prior pending secret,
+   *  PartTwoUIIntegration.md §4) a 2FA enrollment. Nothing is committed until verifyTwoFactor(). */
+  setupTwoFactor(): Observable<TwoFactorSetupDto> {
+    return this.http
+      .post<ApiResponse<TwoFactorSetupDto>>(`${this.baseUrl}/2fa/setup`, {})
+      .pipe(map(res => res.data));
+  }
+
+  verifyTwoFactor(code: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/2fa/verify`, { code });
+  }
+
+  disableTwoFactor(code: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/2fa/disable`, { code });
   }
 }

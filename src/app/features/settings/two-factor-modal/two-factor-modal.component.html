@@ -1,0 +1,73 @@
+<app-modal [title]="mode() === 'enable' ? 'Enable Two-Factor Authentication' : 'Disable Two-Factor Authentication'" size="sm" (closed)="close()">
+
+  @if (settingUp()) {
+    <div class="text-center py-4">
+      <span class="spinner-border spinner-border-sm me-2"></span>Preparing…
+    </div>
+  } @else if (setupError()) {
+    <div class="alert alert-danger py-2 small mb-0">{{ setupError() }}</div>
+  } @else {
+
+    @if (mode() === 'enable') {
+      <p class="small text-muted mb-3">
+        Scan this QR code with your authenticator app (Google Authenticator, Authy, 1Password, …).
+      </p>
+
+      @if (qrDataUrl(); as qr) {
+        <div class="text-center mb-3">
+          <img [src]="qr" alt="Two-factor QR code" width="220" height="220" />
+        </div>
+      }
+
+      @if (setupData(); as data) {
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Can't scan? Enter this code manually:</label>
+          <div class="input-group input-group-sm">
+            <input type="text" class="form-control font-monospace" [value]="data.secret" readonly />
+          </div>
+        </div>
+      }
+
+      <hr />
+      <p class="small text-muted mb-2">Enter the 6-digit code from your app to finish enabling 2FA:</p>
+    } @else {
+      <p class="small text-muted mb-2">
+        Enter the current 6-digit code from your authenticator app to disable two-factor authentication.
+      </p>
+    }
+
+    <div class="mb-2">
+      <input
+        type="text"
+        inputmode="numeric"
+        class="form-control text-center font-monospace fs-4"
+        style="letter-spacing: 0.5em;"
+        maxlength="6"
+        placeholder="000000"
+        [value]="code()"
+        (input)="onCodeInput($any($event.target).value)"
+        [class.is-invalid]="codeError()" />
+      @if (codeError()) {
+        <div class="invalid-feedback d-block">{{ codeError() }}</div>
+      }
+    </div>
+
+  }
+
+  <div modal-footer>
+    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="close()">Cancel</button>
+    @if (!settingUp() && !setupError()) {
+      <button
+        type="button"
+        [class]="mode() === 'enable' ? 'btn btn-primary btn-sm' : 'btn btn-danger btn-sm'"
+        [disabled]="code().length !== 6 || submitting()"
+        (click)="submit()">
+        @if (submitting()) {
+          <span class="spinner-border spinner-border-sm me-2"></span>
+        }
+        {{ mode() === 'enable' ? 'Verify & Enable' : 'Disable 2FA' }}
+      </button>
+    }
+  </div>
+
+</app-modal>
