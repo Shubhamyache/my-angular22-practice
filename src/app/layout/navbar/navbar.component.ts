@@ -3,12 +3,13 @@ import { RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { AuthFeatureService } from '../../features/auth/services/auth-feature.service';
 import { NotificationBellComponent } from '../../features/notifications/notification-bell/notification-bell.component';
+import { GlobalSearchComponent } from '../../features/search/global-search/global-search.component';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterModule, NotificationBellComponent],
+  imports: [RouterModule, NotificationBellComponent, GlobalSearchComponent],
   templateUrl: './navbar.component.html'
 })
 export class NavbarComponent {

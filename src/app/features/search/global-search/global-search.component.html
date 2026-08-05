@@ -1,0 +1,116 @@
+<div class="position-relative w-100">
+  <div class="input-group input-group-sm">
+    <span class="input-group-text navbar-search-addon">
+      <i class="bi bi-search"></i>
+    </span>
+    <input
+      type="search"
+      class="form-control navbar-search-input"
+      placeholder="Search employees, projects, tasks..."
+      [value]="query()"
+      (input)="onInput($any($event.target).value)"
+      (focus)="onFocus()"
+      autofocus />
+    @if (query()) {
+      <button class="btn navbar-search-close" type="button" (click)="clear()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    }
+  </div>
+
+  @if (open() && hasQuery) {
+    <div class="card shadow-lg border-0 position-absolute start-0 mt-2"
+      style="width: 420px; max-width: 90vw; max-height: 480px; z-index: 1060; top: 100%;">
+      <div class="card-body p-0 overflow-auto" style="max-height: 480px;">
+
+        @if (loading()) {
+          <div class="text-center text-muted py-4 small">
+            <span class="spinner-border spinner-border-sm me-2"></span>Searching…
+          </div>
+        } @else if (!hasAnyResults) {
+          <div class="text-center text-muted py-4 small">
+            <i class="bi bi-search d-block fs-4 mb-1 opacity-50"></i>
+            No results for "{{ query() }}"
+          </div>
+        } @else {
+
+          <!-- Employees -->
+          @if (results().employees.length > 0) {
+            <div class="px-3 pt-2 pb-1 text-uppercase text-muted fw-semibold" style="font-size:0.7rem;letter-spacing:0.05em;">
+              Employees
+            </div>
+            <ul class="list-group list-group-flush">
+              @for (emp of results().employees.slice(0, sectionLimit); track emp.id) {
+                <li class="list-group-item list-group-item-action" style="cursor:pointer;" (click)="goTo('/employees', emp.id)">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0"
+                      style="width:32px;height:32px;font-size:0.75rem;font-weight:700;">
+                      {{ emp.firstName[0] }}{{ emp.lastName[0] }}
+                    </div>
+                    <div class="overflow-hidden">
+                      <div class="small fw-semibold text-truncate">{{ emp.firstName }} {{ emp.lastName }}</div>
+                      <div class="text-muted text-truncate" style="font-size:0.75rem;">
+                        {{ emp.jobTitle }} · {{ emp.departmentName }}
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+
+          <!-- Projects -->
+          @if (results().projects.length > 0) {
+            <div class="px-3 pt-2 pb-1 text-uppercase text-muted fw-semibold" style="font-size:0.7rem;letter-spacing:0.05em;">
+              Projects
+            </div>
+            <ul class="list-group list-group-flush">
+              @for (proj of results().projects.slice(0, sectionLimit); track proj.id) {
+                <li class="list-group-item list-group-item-action" style="cursor:pointer;" (click)="goTo('/projects', proj.id)">
+                  <div class="d-flex align-items-center justify-content-between gap-2">
+                    <div class="overflow-hidden">
+                      <div class="small fw-semibold text-truncate">
+                        {{ proj.name }} <span class="text-muted font-monospace" style="font-size:0.7rem;">{{ proj.code }}</span>
+                      </div>
+                      <div class="text-muted text-truncate" style="font-size:0.75rem;">
+                        Managed by {{ proj.managerName }} · {{ proj.teamSize }} members
+                      </div>
+                    </div>
+                    <span class="badge rounded-pill flex-shrink-0" [class]="projectStatusBadge(proj.status)" style="font-size:0.65rem;">
+                      {{ proj.status }}
+                    </span>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+
+          <!-- Tasks -->
+          @if (results().tasks.length > 0) {
+            <div class="px-3 pt-2 pb-1 text-uppercase text-muted fw-semibold" style="font-size:0.7rem;letter-spacing:0.05em;">
+              Tasks
+            </div>
+            <ul class="list-group list-group-flush">
+              @for (task of results().tasks.slice(0, sectionLimit); track task.id) {
+                <li class="list-group-item list-group-item-action" style="cursor:pointer;" (click)="goTo('/tasks', task.id)">
+                  <div class="d-flex align-items-center justify-content-between gap-2">
+                    <div class="overflow-hidden">
+                      <div class="small fw-semibold text-truncate">{{ task.title }}</div>
+                      <div class="text-muted text-truncate" style="font-size:0.75rem;">
+                        {{ task.projectName }} · Assigned to {{ task.assigneeName }}
+                      </div>
+                    </div>
+                    <span class="badge rounded-pill flex-shrink-0" [class]="taskStatusBadge(task.status)" style="font-size:0.65rem;">
+                      {{ task.status }}
+                    </span>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+
+        }
+      </div>
+    </div>
+  }
+</div>

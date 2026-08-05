@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { ApiResponse } from '../../../core/models/api-response.model';
-import { TaskCommentDto } from '../models/task-comment.model';
+import { CreateTaskCommentDto, TaskCommentDto } from '../models/task-comment.model';
 
 @Injectable({ providedIn: 'root' })
 export class TaskCommentService {
@@ -19,9 +19,9 @@ export class TaskCommentService {
       .pipe(map(res => res.data));
   }
 
-  add(taskId: number, text: string): Observable<TaskCommentDto> {
+  add(taskId: number, dto: CreateTaskCommentDto): Observable<TaskCommentDto> {
     return this.http
-      .post<ApiResponse<TaskCommentDto>>(this.url(taskId), { text })
+      .post<ApiResponse<TaskCommentDto>>(this.url(taskId), dto)
       .pipe(map(res => res.data));
   }
 

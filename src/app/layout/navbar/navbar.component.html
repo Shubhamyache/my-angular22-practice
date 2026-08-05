@@ -49,22 +49,7 @@
     <!-- ────────────────── CENTER SEARCH (desktop) ─────────────────── -->
     @if (searchOpen()) {
       <div class="flex-grow-1 mx-4 d-none d-md-block">
-        <div class="input-group input-group-sm">
-          <span class="input-group-text navbar-search-addon">
-            <i class="bi bi-search"></i>
-          </span>
-          <input
-            type="search"
-            class="form-control navbar-search-input"
-            placeholder="Search employees, departments, payroll..."
-            autofocus />
-          <button
-            class="btn navbar-search-close"
-            type="button"
-            (click)="toggleSearch()">
-            <i class="bi bi-x-lg"></i>
-          </button>
-        </div>
+        <app-global-search />
       </div>
     }
 

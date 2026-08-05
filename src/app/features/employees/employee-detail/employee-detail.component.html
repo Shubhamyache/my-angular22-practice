@@ -34,7 +34,49 @@
             <i class="bi bi-pencil me-1"></i> Edit Employee
           </a>
         </div>
+
+        <!-- Login Access — Admin only. See LoginAccessModalComponent's docblock: there's no
+             self-registration flow, so an Admin has to explicitly grant an Employee a login. -->
+        @if (isAdmin) {
+          <div class="card border-0 shadow-sm mt-4">
+            <div class="card-body">
+              <h6 class="fw-semibold mb-2">
+                <i class="bi bi-key-fill me-2 text-secondary"></i>Login Access
+              </h6>
+
+              @if (justGrantedAccess(); as result) {
+                <div class="alert alert-success py-2 small mb-2">
+                  <i class="bi bi-check-circle-fill me-1"></i>
+                  Access granted as {{ result.role }}. A "set your password" email was sent to {{ result.email }}.
+                </div>
+              } @else if (emp.hasLoginAccount) {
+                <span class="badge bg-success rounded-pill px-3 py-2">
+                  <i class="bi bi-check-circle-fill me-1"></i>Has login access
+                </span>
+              } @else {
+                <p class="text-muted small mb-2">
+                  @if (emp.hasLoginAccount === undefined) {
+                    Login status isn't available from the API yet — see PartFourBEChanges.md.
+                  } @else {
+                    This employee has no login account yet.
+                  }
+                </p>
+                <button class="btn btn-outline-primary btn-sm" (click)="loginAccessModalOpen.set(true)">
+                  <i class="bi bi-person-plus me-1"></i>Create Login Access
+                </button>
+              }
+            </div>
+          </div>
+        }
       </div>
+
+      @if (loginAccessModalOpen()) {
+        <app-login-access-modal
+          [employeeId]="emp.id"
+          [employeeEmail]="emp.email"
+          (created)="onLoginAccessCreated($event)"
+          (closed)="loginAccessModalOpen.set(false)" />
+      }
 
       <!-- Details Card -->
       <div class="col-12 col-lg-8">

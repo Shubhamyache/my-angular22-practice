@@ -5,8 +5,10 @@ import { environment } from '../../../../environments/environment';
 import { ApiResponse, PagedResponse } from '../../../core/models/api-response.model';
 import {
   CreateEmployeeDto,
+  CreateLoginAccountDto,
   Employee,
   EmployeeListFilter,
+  LoginAccountResult,
   UpdateEmployeeDto
 } from '../models/employee.model';
 
@@ -55,6 +57,17 @@ export class EmployeeService {
   search(query: string): Observable<Employee[]> {
     return this.http
       .get<ApiResponse<Employee[]>>(`${this.baseUrl}/search`, { params: new HttpParams().set('q', query) })
+      .pipe(map(res => res.data));
+  }
+
+  /**
+   * PartFourBEChanges.md — POST /employees/{id}/account doesn't exist on the backend yet
+   * (UIIntegrationInfo.md §18's "no user/account creation endpoint" gap). Admin-only. Wired now
+   * so EmployeeDetailComponent's "Create Login Access" button works the moment it ships.
+   */
+  createLoginAccount(employeeId: number, dto: CreateLoginAccountDto): Observable<LoginAccountResult> {
+    return this.http
+      .post<ApiResponse<LoginAccountResult>>(`${this.baseUrl}/${employeeId}/account`, dto)
       .pipe(map(res => res.data));
   }
 }

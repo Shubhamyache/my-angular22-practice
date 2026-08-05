@@ -50,30 +50,67 @@
                     </button>
                   }
                 </div>
-                <!-- Rendered as plain text (no innerHTML) — comment text is untrusted input,
-                     Angular interpolation escapes it automatically. -->
-                <p class="mb-0 small" style="white-space: pre-wrap;">{{ comment.text }}</p>
+                <!-- Rendered as safe segments (no innerHTML) — comment text is untrusted input;
+                     "@Full Name" matches against actual project members are bolded, everything
+                     else is plain interpolated text, which Angular escapes automatically. -->
+                <p class="mb-0 small" style="white-space: pre-wrap;">
+                  @for (segment of renderSegments(comment.text); track $index) {
+                    @if (segment.type === 'mention') {
+                      <strong class="text-primary">{{ segment.value }}</strong>
+                    } @else {
+                      <span>{{ segment.value }}</span>
+                    }
+                  }
+                </p>
               </div>
             </div>
           }
         </div>
       }
 
-      <div class="d-flex gap-2 align-items-start">
-        <textarea
-          class="form-control form-control-sm"
-          rows="2"
-          [attr.maxlength]="maxLength"
-          placeholder="Add a comment…"
-          [value]="draft()"
-          (input)="draft.set($any($event.target).value)"></textarea>
-        <button class="btn btn-primary btn-sm flex-shrink-0" [disabled]="!draft().trim() || posting()" (click)="addComment()">
-          @if (posting()) {
-            <span class="spinner-border spinner-border-sm"></span>
-          } @else {
-            <i class="bi bi-send"></i>
-          }
-        </button>
+      <div class="position-relative">
+        <div class="d-flex gap-2 align-items-start">
+          <textarea
+            #draftInput
+            class="form-control form-control-sm"
+            rows="2"
+            [attr.maxlength]="maxLength"
+            placeholder="Add a comment… (type @ to mention someone on this project)"
+            [value]="draft()"
+            (input)="onDraftInput($any($event.target))"></textarea>
+          <button class="btn btn-primary btn-sm flex-shrink-0" [disabled]="!draft().trim() || posting()" (click)="addComment()">
+            @if (posting()) {
+              <span class="spinner-border spinner-border-sm"></span>
+            } @else {
+              <i class="bi bi-send"></i>
+            }
+          </button>
+        </div>
+
+        @if (mentionQuery() !== null) {
+          <div class="card shadow border-0 position-absolute start-0" style="width: 260px; z-index: 20; top: 100%;">
+            @if (mentionResults().length === 0) {
+              <div class="text-muted small p-2">No matching project members.</div>
+            } @else {
+              <ul class="list-group list-group-flush">
+                @for (member of mentionResults(); track member.id) {
+                  <li class="list-group-item list-group-item-action py-1 px-2" style="cursor:pointer;" (click)="selectMention(member)">
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center flex-shrink-0"
+                        style="width:24px;height:24px;font-size:0.65rem;font-weight:700;">
+                        {{ member.firstName[0] }}{{ member.lastName[0] }}
+                      </div>
+                      <div class="overflow-hidden">
+                        <div class="small text-truncate">{{ member.firstName }} {{ member.lastName }}</div>
+                        <div class="text-muted text-truncate" style="font-size:0.65rem;">{{ member.jobTitle }}</div>
+                      </div>
+                    </div>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        }
       </div>
       <small class="text-muted">{{ draft().length }}/{{ maxLength }}</small>
 

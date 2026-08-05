@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { DatePipe }                 from '@angular/common';
+import { RouterLink }               from '@angular/router';
 import { DashboardService }         from './services/dashboard.service';
 import { AuthService }              from '../../core/services/auth.service';
 import { QuickAction }              from './models/dashboard.model';
@@ -91,6 +92,7 @@ const QUICK_ACTIONS: QuickAction[] = [
   standalone: true,
   imports: [
     DatePipe,
+    RouterLink,
     StatsCardComponent,
     RecentEmployeesComponent,
     RecentProjectsComponent,

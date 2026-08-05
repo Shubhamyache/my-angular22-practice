@@ -51,7 +51,7 @@
               → O(diff) instead of O(n) DOM operations
           -->
           @for (emp of employees(); track emp.id) {
-            <tr>
+            <tr [routerLink]="['/employees', emp.id]" style="cursor:pointer;">
 
               <!-- Avatar + Name + Job Title -->
               <td class="px-4 py-3">

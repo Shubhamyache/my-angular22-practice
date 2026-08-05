@@ -19,7 +19,7 @@
     <ul class="list-group list-group-flush">
 
       @for (task of tasks(); track task.id) {
-        <li class="list-group-item px-4 py-3 border-bottom">
+        <li class="list-group-item list-group-item-action px-4 py-3 border-bottom" [routerLink]="['/tasks', task.id]" style="cursor:pointer;">
           <div class="d-flex align-items-start gap-3">
 
             <!--

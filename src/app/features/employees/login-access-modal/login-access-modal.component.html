@@ -1,0 +1,32 @@
+<app-modal title="Create Login Access" size="sm" (closed)="close()">
+
+  <p class="small text-muted">
+    This creates a login account for <strong>{{ employeeEmail() }}</strong> and emails them a link
+    to set their password.
+  </p>
+
+  @if (error()) {
+    <div class="alert alert-danger py-2 small mb-3">{{ error() }}</div>
+  }
+
+  <div class="mb-3">
+    <label class="form-label fw-semibold small">Role</label>
+    <select class="form-select form-select-sm" [value]="role()" (change)="role.set($any($event.target).value)">
+      @for (r of roles; track r) {
+        <option [value]="r">{{ r }}</option>
+      }
+    </select>
+    <small class="text-muted">Controls what this account can see and do — see UIIntegrationInfo.md §13.</small>
+  </div>
+
+  <div modal-footer>
+    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="close()">Cancel</button>
+    <button type="button" class="btn btn-primary btn-sm" [disabled]="submitting()" (click)="submit()">
+      @if (submitting()) {
+        <span class="spinner-border spinner-border-sm me-2"></span>
+      }
+      Grant Access
+    </button>
+  </div>
+
+</app-modal>

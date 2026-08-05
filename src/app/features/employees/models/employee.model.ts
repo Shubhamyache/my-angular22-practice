@@ -14,6 +14,26 @@ export interface Employee {
   managerId: number | null;
   managerName: string | null;
   avatarUrl: string | null;
+  /**
+   * Not yet returned by the backend — see PartFourBEChanges.md. `EmployeeDto` today has no way
+   * to tell whether this Employee record has a linked `User` login account
+   * (UIIntegrationInfo.md §18 — there's no account-provisioning endpoint at all yet). Optional
+   * so existing code reading `Employee` objects is unaffected; `undefined` is treated as
+   * "unknown" by `EmployeeDetailComponent`'s Login Access panel, not as `false`.
+   */
+  hasLoginAccount?: boolean;
+}
+
+/** PartFourBEChanges.md — request for the (not yet built) account-provisioning endpoint. */
+export interface CreateLoginAccountDto {
+  role: 'Admin' | 'HR' | 'Manager' | 'Employee';
+}
+
+/** PartFourBEChanges.md — response for the (not yet built) account-provisioning endpoint. */
+export interface LoginAccountResult {
+  userId: number;
+  email: string;
+  role: string;
 }
 
 export interface CreateEmployeeDto {

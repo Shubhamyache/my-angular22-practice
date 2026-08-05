@@ -141,37 +141,51 @@
           -8.5  → shown as -8.5% (red arrow down — more pending tasks would be bad)
           0     → gray dash (no change)
       -->
+      <!--
+        Each KPI card links to the screen it summarizes — routerLink on a wrapping <a> rather
+        than adding click-navigation to StatsCardComponent itself, so that dumb/presentational
+        component stays free of router knowledge (same "dumb components don't know about
+        routes" boundary the file's own docblock argues for elsewhere on this page).
+      -->
       <div class="col-12 col-sm-6 col-xl-3">
-        <app-stats-card
-          label="Total Employees"
-          [value]="stats()!.totalEmployees"
-          icon="bi-people-fill"
-          color="primary"
-          [change]="stats()!.employeeChange" />
+        <a routerLink="/employees" class="text-decoration-none text-reset d-block h-100">
+          <app-stats-card
+            label="Total Employees"
+            [value]="stats()!.totalEmployees"
+            icon="bi-people-fill"
+            color="primary"
+            [change]="stats()!.employeeChange" />
+        </a>
       </div>
       <div class="col-12 col-sm-6 col-xl-3">
-        <app-stats-card
-          label="Active Projects"
-          [value]="stats()!.activeProjects"
-          icon="bi-kanban-fill"
-          color="success"
-          [change]="stats()!.projectChange" />
+        <a routerLink="/projects" class="text-decoration-none text-reset d-block h-100">
+          <app-stats-card
+            label="Active Projects"
+            [value]="stats()!.activeProjects"
+            icon="bi-kanban-fill"
+            color="success"
+            [change]="stats()!.projectChange" />
+        </a>
       </div>
       <div class="col-12 col-sm-6 col-xl-3">
-        <app-stats-card
-          label="Pending Tasks"
-          [value]="stats()!.pendingTasks"
-          icon="bi-check2-square"
-          color="warning"
-          [change]="stats()!.taskChange" />
+        <a routerLink="/tasks" class="text-decoration-none text-reset d-block h-100">
+          <app-stats-card
+            label="Pending Tasks"
+            [value]="stats()!.pendingTasks"
+            icon="bi-check2-square"
+            color="warning"
+            [change]="stats()!.taskChange" />
+        </a>
       </div>
       <div class="col-12 col-sm-6 col-xl-3">
-        <app-stats-card
-          label="Departments"
-          [value]="stats()!.totalDepartments"
-          icon="bi-diagram-3-fill"
-          color="info"
-          [change]="stats()!.departmentChange" />
+        <a routerLink="/departments" class="text-decoration-none text-reset d-block h-100">
+          <app-stats-card
+            label="Departments"
+            [value]="stats()!.totalDepartments"
+            icon="bi-diagram-3-fill"
+            color="info"
+            [change]="stats()!.departmentChange" />
+        </a>
       </div>
     }
 
