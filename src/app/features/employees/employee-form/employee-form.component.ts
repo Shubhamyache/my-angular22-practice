@@ -3,7 +3,8 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { EmployeeService } from '../services/employee.service';
 import { EmployeeStore } from '../store/employee.store';
-import { CreateEmployeeDto, UpdateEmployeeDto } from '../models/employee.model';
+import { CreateEmployeeDto, Employee, UpdateEmployeeDto } from '../models/employee.model';
+import { ErrorHandlerService } from '../../../core/services/error-handler.service';
 
 @Component({
   selector: 'app-employee-form',
@@ -18,6 +19,7 @@ export class EmployeeFormComponent implements OnInit {
   private readonly store           = inject(EmployeeStore);
   private readonly route           = inject(ActivatedRoute);
   private readonly router          = inject(Router);
+  private readonly errorHandler    = inject(ErrorHandlerService);
 
   protected readonly isEditMode = signal(false);
   protected readonly loading    = signal(false);
@@ -35,7 +37,13 @@ export class EmployeeFormComponent implements OnInit {
     departmentId: [0,  [Validators.required, Validators.min(1)]],
     jobTitle:     ['', Validators.required],
     salary:       [0,  [Validators.required, Validators.min(1)]],
-    hireDate:     ['', Validators.required]
+    hireDate:     ['', Validators.required],
+    // Create-mode only (see the template) — kicks off EmployeeService.createLoginAccount()
+    // right after the Employee record itself is created. Always role: 'Employee' here; granting
+    // an elevated role stays a deliberate, separate action via EmployeeDetailComponent's Login
+    // Access panel (LoginAccessModalComponent), not something a bulk-onboarding checkbox should
+    // be able to do by accident.
+    sendRegistrationEmail: [true]
   });
 
   ngOnInit(): void {
@@ -83,6 +91,8 @@ export class EmployeeFormComponent implements OnInit {
       hireDate:     raw.hireDate     ?? ''
     };
 
+    const sendRegistrationEmail = this.form.getRawValue().sendRegistrationEmail;
+
     const request$ = this.isEditMode()
       ? this.employeeService.update(this.editId, { ...dto, isActive: this.currentIsActive } satisfies UpdateEmployeeDto)
       : this.employeeService.create(dto);
@@ -90,11 +100,41 @@ export class EmployeeFormComponent implements OnInit {
     request$.subscribe({
       next: emp => {
         this.isEditMode() ? this.store.updateEmployee(emp) : this.store.addEmployee(emp);
+
+        if (!this.isEditMode() && sendRegistrationEmail) {
+          // Deliberately not awaited before navigating — the Employee record is already safely
+          // created at this point, and this second call is a nice-to-have on top of it, not a
+          // precondition for it. See sendLoginAccountEmail()'s docblock for the failure handling.
+          this.sendLoginAccountEmail(emp);
+        }
+
         this.router.navigate(['/employees']);
       },
       error: (err: Error) => {
         this.error.set(err.message);
         this.loading.set(false);
+      }
+    });
+  }
+
+  /**
+   * Fire-and-forget: creates the login account + triggers the registration email
+   * (PartFourBEChanges.md §2). Failure here must never look like the employee creation itself
+   * failed — the Employee record already exists and is already saved by the time this runs — so
+   * errors surface as a dismissible warning toast pointing at the manual retry path
+   * (EmployeeDetailComponent's "Create Login Access" panel) rather than blocking navigation or
+   * reusing this form's own `error` banner.
+   */
+  private sendLoginAccountEmail(emp: Employee): void {
+    this.employeeService.createLoginAccount(emp.id, { role: 'Employee' }).subscribe({
+      next: () => {
+        this.errorHandler.notify('success', `${emp.firstName} ${emp.lastName} was created and a registration email was sent to ${emp.email}.`);
+      },
+      error: () => {
+        this.errorHandler.notify(
+          'warning',
+          `${emp.firstName} ${emp.lastName} was created, but the registration email couldn't be sent. You can send it later from their profile.`
+        );
       }
     });
   }

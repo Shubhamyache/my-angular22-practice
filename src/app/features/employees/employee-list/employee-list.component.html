@@ -49,6 +49,9 @@
                 <th>Department</th>
                 <th>Job Title</th>
                 <th>Status</th>
+                @if (canManageEmployees) {
+                  <th>Account</th>
+                }
                 <th class="text-end pe-4">Actions</th>
               </tr>
             </thead>
@@ -80,6 +83,13 @@
                       {{ emp.isActive ? 'Active' : 'Inactive' }}
                     </span>
                   </td>
+                  @if (canManageEmployees) {
+                    <td>
+                      <span class="badge rounded-pill" [class]="accountStatusBadge[accountStatus(emp)].badgeClass" [title]="accountStatusBadge[accountStatus(emp)].label">
+                        <i [class]="'bi ' + accountStatusBadge[accountStatus(emp)].icon + ' me-1'"></i>{{ accountStatusBadge[accountStatus(emp)].label }}
+                      </span>
+                    </td>
+                  }
                   <td class="text-end pe-4">
                     <div class="d-flex gap-1 justify-content-end">
                       <a [routerLink]="[emp.id]"
@@ -105,7 +115,7 @@
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="7" class="text-center py-5 text-muted">
+                  <td [attr.colspan]="canManageEmployees ? 8 : 7" class="text-center py-5 text-muted">
                     <i class="bi bi-inbox display-6 d-block mb-2"></i>
                     No employees found.
                     @if (canManageEmployees) {

@@ -35,13 +35,15 @@
           </a>
         </div>
 
-        <!-- Login Access — Admin only. See LoginAccessModalComponent's docblock: there's no
-             self-registration flow, so an Admin has to explicitly grant an Employee a login. -->
-        @if (isAdmin) {
+        <!-- Account Access — Admin+HR can grant a base login; only Admin can activate/deactivate
+             an existing one. See EmployeeDetailComponent's docblock for the full rationale
+             (there's no self-registration flow on the backend, UIIntegrationInfo.md §18, so an
+             Admin/HR has to explicitly manage this). -->
+        @if (canManageLoginAccess) {
           <div class="card border-0 shadow-sm mt-4">
             <div class="card-body">
               <h6 class="fw-semibold mb-2">
-                <i class="bi bi-key-fill me-2 text-secondary"></i>Login Access
+                <i class="bi bi-key-fill me-2 text-secondary"></i>Account Access
               </h6>
 
               @if (justGrantedAccess(); as result) {
@@ -49,21 +51,98 @@
                   <i class="bi bi-check-circle-fill me-1"></i>
                   Access granted as {{ result.role }}. A "set your password" email was sent to {{ result.email }}.
                 </div>
-              } @else if (emp.hasLoginAccount) {
-                <span class="badge bg-success rounded-pill px-3 py-2">
-                  <i class="bi bi-check-circle-fill me-1"></i>Has login access
-                </span>
-              } @else {
-                <p class="text-muted small mb-2">
-                  @if (emp.hasLoginAccount === undefined) {
-                    Login status isn't available from the API yet — see PartFourBEChanges.md.
-                  } @else {
-                    This employee has no login account yet.
+              }
+              @if (resendSuccess()) {
+                <div class="alert alert-success py-2 small mb-2">
+                  <i class="bi bi-check-circle-fill me-1"></i>Registration email resent to {{ emp.email }}.
+                </div>
+              }
+              @if (accountActionError()) {
+                <div class="alert alert-danger py-2 small mb-2">
+                  {{ accountActionError() }}
+                  <button type="button" class="btn-close float-end" style="font-size:0.6rem;" (click)="accountActionError.set(null)"></button>
+                </div>
+              }
+
+              @switch (accountStatus()) {
+
+                @case ('unknown') {
+                  <p class="text-muted small mb-2">Login status isn't available from the API yet — see PartFourBEChanges.md.</p>
+                  <button class="btn btn-outline-primary btn-sm" (click)="loginAccessModalOpen.set(true)">
+                    <i class="bi bi-person-plus me-1"></i>Create Login Access
+                  </button>
+                }
+
+                @case ('none') {
+                  <p class="text-muted small mb-2">This employee has no login account yet.</p>
+                  <button class="btn btn-outline-primary btn-sm" (click)="loginAccessModalOpen.set(true)">
+                    <i class="bi bi-person-plus me-1"></i>Create Login Access
+                  </button>
+                }
+
+                @case ('pending') {
+                  <span class="badge bg-warning text-dark rounded-pill px-3 py-2 mb-2 d-inline-block">
+                    <i class="bi bi-hourglass-split me-1"></i>Pending Registration
+                  </span>
+                  <p class="text-muted small mb-2">
+                    An account exists, but {{ emp.firstName }} hasn't set a password yet.
+                  </p>
+                  <div class="d-flex gap-2 flex-wrap">
+                    <button class="btn btn-outline-primary btn-sm" [disabled]="resendingEmail()" (click)="resendRegistrationEmail()">
+                      @if (resendingEmail()) {
+                        <span class="spinner-border spinner-border-sm me-1"></span>
+                      } @else {
+                        <i class="bi bi-envelope-arrow-up me-1"></i>
+                      }
+                      Resend Registration Email
+                    </button>
+                    @if (canManageAccountStatus && !isSelf()) {
+                      <button class="btn btn-outline-danger btn-sm" [disabled]="togglingActive()" (click)="deactivateAccount()">
+                        <i class="bi bi-slash-circle me-1"></i>Deactivate
+                      </button>
+                    }
+                  </div>
+                }
+
+                @case ('active') {
+                  <span class="badge bg-success rounded-pill px-3 py-2 mb-2 d-inline-block">
+                    <i class="bi bi-check-circle-fill me-1"></i>Active
+                  </span>
+                  @if (isSelf()) {
+                    <p class="text-muted small mb-0">
+                      <i class="bi bi-info-circle me-1"></i>This is your own account — you can't deactivate it here.
+                    </p>
+                  } @else if (canManageAccountStatus) {
+                    <div>
+                      <button class="btn btn-outline-danger btn-sm" [disabled]="togglingActive()" (click)="deactivateAccount()">
+                        @if (togglingActive()) {
+                          <span class="spinner-border spinner-border-sm me-1"></span>
+                        } @else {
+                          <i class="bi bi-slash-circle me-1"></i>
+                        }
+                        Deactivate Account
+                      </button>
+                    </div>
                   }
-                </p>
-                <button class="btn btn-outline-primary btn-sm" (click)="loginAccessModalOpen.set(true)">
-                  <i class="bi bi-person-plus me-1"></i>Create Login Access
-                </button>
+                }
+
+                @case ('deactivated') {
+                  <span class="badge bg-danger rounded-pill px-3 py-2 mb-2 d-inline-block">
+                    <i class="bi bi-x-circle-fill me-1"></i>Deactivated
+                  </span>
+                  <p class="text-muted small mb-2">This account can't log in until reactivated.</p>
+                  @if (canManageAccountStatus) {
+                    <button class="btn btn-outline-success btn-sm" [disabled]="togglingActive()" (click)="activateAccount()">
+                      @if (togglingActive()) {
+                        <span class="spinner-border spinner-border-sm me-1"></span>
+                      } @else {
+                        <i class="bi bi-check-circle me-1"></i>
+                      }
+                      Reactivate Account
+                    </button>
+                  }
+                }
+
               }
             </div>
           </div>
@@ -74,6 +153,7 @@
         <app-login-access-modal
           [employeeId]="emp.id"
           [employeeEmail]="emp.email"
+          [allowedRoles]="allowedGrantRoles"
           (created)="onLoginAccessCreated($event)"
           (closed)="loginAccessModalOpen.set(false)" />
       }

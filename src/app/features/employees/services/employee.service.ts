@@ -4,6 +4,7 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { ApiResponse, PagedResponse } from '../../../core/models/api-response.model';
 import {
+  AccountStatusResult,
   CreateEmployeeDto,
   CreateLoginAccountDto,
   Employee,
@@ -68,6 +69,20 @@ export class EmployeeService {
   createLoginAccount(employeeId: number, dto: CreateLoginAccountDto): Observable<LoginAccountResult> {
     return this.http
       .post<ApiResponse<LoginAccountResult>>(`${this.baseUrl}/${employeeId}/account`, dto)
+      .pipe(map(res => res.data));
+  }
+
+  /**
+   * PartSixBEChangesNeeded.md — PATCH /employees/{id}/account/status doesn't exist on the
+   * backend yet. Admin-only. Deactivating MUST force-revoke that user's active sessions
+   * server-side (same "sign out everywhere" pattern already used for a password change,
+   * PartTwoUIIntegration.md §3) and login/refresh must start rejecting an inactive account —
+   * see that doc for why this is a hard requirement, not a nice-to-have, or the toggle here
+   * would be cosmetic only.
+   */
+  setAccountActive(employeeId: number, isActive: boolean): Observable<AccountStatusResult> {
+    return this.http
+      .patch<ApiResponse<AccountStatusResult>>(`${this.baseUrl}/${employeeId}/account/status`, { isActive })
       .pipe(map(res => res.data));
   }
 }

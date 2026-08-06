@@ -2,8 +2,10 @@ import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/cor
 import { RouterModule } from '@angular/router';
 import { EmployeeStore } from '../store/employee.store';
 import { EmployeeService } from '../services/employee.service';
+import { Employee } from '../models/employee.model';
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
 import { AuthService } from '../../../core/services/auth.service';
+import { ACCOUNT_STATUS_BADGE, getAccountStatus } from '../utils/account-status.util';
 
 @Component({
   selector: 'app-employee-list',
@@ -17,9 +19,18 @@ export class EmployeeListComponent implements OnInit {
   private readonly employeeService = inject(EmployeeService);
   private readonly authService = inject(AuthService);
 
-  /** Manager can view this list (route-guarded per §13) but not create/edit/delete — Admin/HR only. */
+  /** Manager can view this list (route-guarded per §13) but not create/edit/delete — Admin/HR only.
+   *  The Account status column (login access, separate from Employee.isActive's HR/employment
+   *  status) is shown to the same pair — see EmployeeDetailComponent for where it's actually
+   *  managed; this list only surfaces it at a glance. */
   protected readonly canManageEmployees = this.authService.getUserRole() === 'Admin'
     || this.authService.getUserRole() === 'HR';
+
+  protected readonly accountStatusBadge = ACCOUNT_STATUS_BADGE;
+
+  protected accountStatus(emp: Employee) {
+    return getAccountStatus(emp);
+  }
 
   ngOnInit(): void {
     this.store.loadEmployees();

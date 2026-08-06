@@ -1,32 +1,67 @@
 <app-modal title="Create Login Access" size="sm" (closed)="close()">
 
-  <p class="small text-muted">
-    This creates a login account for <strong>{{ employeeEmail() }}</strong> and emails them a link
-    to set their password.
-  </p>
+  @if (resent()) {
+    <div class="alert alert-success py-2 small mb-0">
+      <i class="bi bi-check-circle-fill me-1"></i>
+      A fresh registration email was sent to <strong>{{ employeeEmail() }}</strong>.
+    </div>
 
-  @if (error()) {
-    <div class="alert alert-danger py-2 small mb-3">{{ error() }}</div>
+  } @else if (alreadyExists()) {
+    <div class="alert alert-warning py-2 small">
+      <i class="bi bi-exclamation-circle-fill me-1"></i>
+      {{ employeeEmail() }} already has a login account. If they never finished setting a
+      password (or their link expired), you can resend the email instead.
+    </div>
+    @if (error()) {
+      <div class="alert alert-danger py-2 small">{{ error() }}</div>
+    }
+
+  } @else {
+    <p class="small text-muted">
+      This creates a login account for <strong>{{ employeeEmail() }}</strong> and emails them a link
+      to set their password.
+    </p>
+
+    @if (error()) {
+      <div class="alert alert-danger py-2 small mb-3">{{ error() }}</div>
+    }
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold small">Role</label>
+      @if (allowedRoles().length > 1) {
+        <select class="form-select form-select-sm" [value]="role()" (change)="role.set($any($event.target).value)">
+          @for (r of allowedRoles(); track r) {
+            <option [value]="r">{{ r }}</option>
+          }
+        </select>
+        <small class="text-muted">Controls what this account can see and do — see UIIntegrationInfo.md §13.</small>
+      } @else {
+        <input type="text" class="form-control form-control-sm" [value]="allowedRoles()[0]" disabled />
+        <small class="text-muted">Only Admins can grant a role other than Employee.</small>
+      }
+    </div>
   }
 
-  <div class="mb-3">
-    <label class="form-label fw-semibold small">Role</label>
-    <select class="form-select form-select-sm" [value]="role()" (change)="role.set($any($event.target).value)">
-      @for (r of roles; track r) {
-        <option [value]="r">{{ r }}</option>
-      }
-    </select>
-    <small class="text-muted">Controls what this account can see and do — see UIIntegrationInfo.md §13.</small>
-  </div>
-
   <div modal-footer>
-    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="close()">Cancel</button>
-    <button type="button" class="btn btn-primary btn-sm" [disabled]="submitting()" (click)="submit()">
-      @if (submitting()) {
-        <span class="spinner-border spinner-border-sm me-2"></span>
-      }
-      Grant Access
-    </button>
+    @if (resent()) {
+      <button type="button" class="btn btn-primary btn-sm" (click)="close()">Done</button>
+    } @else if (alreadyExists()) {
+      <button type="button" class="btn btn-outline-secondary btn-sm" (click)="close()">Cancel</button>
+      <button type="button" class="btn btn-primary btn-sm" [disabled]="submitting()" (click)="resend()">
+        @if (submitting()) {
+          <span class="spinner-border spinner-border-sm me-2"></span>
+        }
+        Resend Email
+      </button>
+    } @else {
+      <button type="button" class="btn btn-outline-secondary btn-sm" (click)="close()">Cancel</button>
+      <button type="button" class="btn btn-primary btn-sm" [disabled]="submitting()" (click)="submit()">
+        @if (submitting()) {
+          <span class="spinner-border spinner-border-sm me-2"></span>
+        }
+        Grant Access
+      </button>
+    }
   </div>
 
 </app-modal>
