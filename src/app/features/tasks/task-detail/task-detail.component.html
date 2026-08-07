@@ -205,10 +205,9 @@
                   <select
                     class="form-select form-select-sm"
                     [disabled]="changingStatus()"
-                    [value]="t.status"
                     (change)="onStatusChange($event)">
                     @for (s of statusOptions; track s) {
-                      <option [value]="s">{{ statusConfig[s].label }}</option>
+                      <option [value]="s" [selected]="s === t.status">{{ statusConfig[s].label }}</option>
                     }
                   </select>
                 }

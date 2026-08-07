@@ -57,6 +57,9 @@
 //  SIDEBAR — Desktop behavior
 //  Part of the normal flex flow. Width controlled by .sidebar-collapsed class.
 // ═══════════════════════════════════════════════════════════════════════════════
+app-sidebar {
+  display: contents;
+}
 
 .sidebar {
   background: #1a1d23;
