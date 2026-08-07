@@ -10,6 +10,7 @@ import { AuthFeatureService } from '../../auth/services/auth-feature.service';
 import { ErrorHandlerService } from '../../../core/services/error-handler.service';
 import { LoginAccessModalComponent } from '../login-access-modal/login-access-modal.component';
 import { getAccountStatus } from '../utils/account-status.util';
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-employee-detail',
@@ -24,6 +25,7 @@ export class EmployeeDetailComponent implements OnInit {
   private readonly authService        = inject(AuthService);
   private readonly authFeatureService = inject(AuthFeatureService);
   private readonly errorHandler       = inject(ErrorHandlerService);
+  private readonly confirmDialog      = inject(ConfirmDialogService);
 
   protected readonly employee = signal<Employee | null>(null);
   protected readonly loading  = signal(true);
@@ -116,13 +118,19 @@ export class EmployeeDetailComponent implements OnInit {
     });
   }
 
-  deactivateAccount(): void {
+  async deactivateAccount(): Promise<void> {
     const emp = this.employee();
     if (!emp || this.togglingActive() || this.isSelf()) return;
 
-    if (!confirm(`Deactivate ${emp.firstName} ${emp.lastName}'s account? They'll be signed out immediately and won't be able to log in until reactivated.`)) {
-      return;
-    }
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Deactivate Account',
+      message: `Deactivate ${emp.firstName} ${emp.lastName}'s account? They'll be signed out immediately and won't be able to log in until reactivated.`,
+      confirmText: 'Deactivate',
+      confirmClass: 'btn-danger',
+      icon: 'bi-person-x',
+      iconColor: 'text-danger'
+    });
+    if (!confirmed) return;
 
     this.setAccountActive(emp, false);
   }

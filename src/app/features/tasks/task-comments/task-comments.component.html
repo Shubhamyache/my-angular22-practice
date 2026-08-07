@@ -1,3 +1,10 @@
+<style>
+  .comment-highlighted {
+    background-color: rgba(13, 110, 253, 0.12);
+    transition: background-color 0.3s ease;
+  }
+</style>
+
 <div class="card border-0 shadow-sm mb-4">
   <div class="card-header bg-white border-bottom">
     <h5 class="mb-0 fw-semibold">
@@ -27,7 +34,10 @@
       } @else {
         <div class="d-flex flex-column gap-3 mb-4">
           @for (comment of comments(); track comment.id) {
-            <div class="d-flex gap-2">
+            <div
+              [id]="'comment-' + comment.id"
+              class="d-flex gap-2 p-2 rounded-3"
+              [class.comment-highlighted]="activeHighlightId() === comment.id">
               <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center flex-shrink-0"
                 style="width:32px;height:32px;font-size:0.75rem;font-weight:700;">
                 {{ comment.authorName.split(' ').map(n => n[0]).join('').slice(0, 2) }}

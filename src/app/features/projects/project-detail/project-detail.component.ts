@@ -37,6 +37,7 @@ import { CurrencyFormatPipe } from '../../../shared/pipes/currency-format.pipe';
 import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 import { AuthService } from '../../../core/services/auth.service';
 import { canEditProject } from '../../../core/utils/permissions.util';
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-project-detail',
@@ -56,6 +57,7 @@ export class ProjectDetailComponent implements OnInit {
   private readonly authService    = inject(AuthService);
   private readonly route          = inject(ActivatedRoute);
   private readonly router         = inject(Router);
+  private readonly confirmDialog  = inject(ConfirmDialogService);
 
   private readonly invalidId = signal(false);
 
@@ -96,24 +98,25 @@ export class ProjectDetailComponent implements OnInit {
    * Delete with confirmation. Previously only removed the row from the local store without
    * ever calling the API — fixed to actually call DELETE /projects/{id} first.
    */
-  onDelete(): void {
+  async onDelete(): Promise<void> {
     const proj = this.project();
     if (!proj || this.deleting()) return;
 
-    if (confirm(`Are you sure you want to delete "${proj.name}"?`)) {
-      this.deleting.set(true);
-      this.projectService.delete(proj.id).subscribe({
-        next: () => {
-          this.store.removeProject(proj.id);
-          this.router.navigate(['/projects']);
-        },
-        error: () => {
-          // errorInterceptor already surfaced a toast for 403/409/500; for a 404 (already
-          // deleted elsewhere) the store's error() signal will show the inline alert.
-          this.deleting.set(false);
-        }
-      });
-    }
+    const confirmed = await this.confirmDialog.confirmDelete(proj.name);
+    if (!confirmed) return;
+
+    this.deleting.set(true);
+    this.projectService.delete(proj.id).subscribe({
+      next: () => {
+        this.store.removeProject(proj.id);
+        this.router.navigate(['/projects']);
+      },
+      error: () => {
+        // errorInterceptor already surfaced a toast for 403/409/500; for a 404 (already
+        // deleted elsewhere) the store's error() signal will show the inline alert.
+        this.deleting.set(false);
+      }
+    });
   }
 
   /**

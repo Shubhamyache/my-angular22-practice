@@ -13,6 +13,7 @@ import { TaskStatus, TaskPriority } from '../models/task.model';
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
 import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 import { AuthService } from '../../../core/services/auth.service';
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-task-list',
@@ -32,6 +33,7 @@ export class TaskListComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly route       = inject(ActivatedRoute);
   private readonly router      = inject(Router);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   /** Set when navigated here via project-detail's "View Tasks" quick action
    *  (?projectId=N) — reuses TaskStore.loadTasks(projectId) which already supports this. */
@@ -117,12 +119,13 @@ export class TaskListComponent implements OnInit {
    * /tasks/{id} — fixed to call the real endpoint first (same fix as EmployeeListComponent
    * / ProjectListComponent).
    */
-  confirmDelete(task: { id: number; title: string }): void {
-    if (confirm(`Are you sure you want to delete task "${task.title}"?`)) {
-      this.taskService.delete(task.id).subscribe({
-        next: () => this.store.removeTask(task.id)
-      });
-    }
+  async confirmDelete(task: { id: number; title: string }): Promise<void> {
+    const confirmed = await this.confirmDialog.confirmDelete(task.title);
+    if (!confirmed) return;
+
+    this.taskService.delete(task.id).subscribe({
+      next: () => this.store.removeTask(task.id)
+    });
   }
 
   clearFilters(): void {

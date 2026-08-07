@@ -4,6 +4,8 @@ import { UserProfileService } from '../services/user-profile.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { environment } from '../../../../environments/environment';
 import { ApiError, getFieldError } from '../../../core/utils/api-error.util';
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { AvatarCropModalComponent } from '../../../shared/components/avatar-crop-modal/avatar-crop-modal.component';
 
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2MB — PartTwoUIIntegration.md §2
 const ALLOWED_AVATAR_TYPES = ['image/jpeg', 'image/png'];
@@ -11,7 +13,7 @@ const ALLOWED_AVATAR_TYPES = ['image/jpeg', 'image/png'];
 @Component({
   selector: 'app-profile-settings',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, AvatarCropModalComponent],
   templateUrl: './profile-settings.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -19,6 +21,7 @@ export class ProfileSettingsComponent implements OnInit {
   private readonly fb                 = inject(FormBuilder);
   private readonly userProfileService = inject(UserProfileService);
   private readonly authService        = inject(AuthService);
+  private readonly confirmDialog      = inject(ConfirmDialogService);
 
   protected readonly loading     = signal(true);
   protected readonly saving      = signal(false);
@@ -27,6 +30,9 @@ export class ProfileSettingsComponent implements OnInit {
   protected readonly avatarUrl     = signal<string | null>(null);
   protected readonly avatarLoading = signal(false);
   protected readonly avatarError   = signal<string | null>(null);
+
+  /** Set while the crop modal is open — the file the user just picked, pre-upload. */
+  protected readonly pendingAvatarFile = signal<File | null>(null);
 
   protected readonly form = this.fb.group({
     firstName: ['', Validators.required],
@@ -62,6 +68,9 @@ export class ProfileSettingsComponent implements OnInit {
     return `${environment.backendOrigin}${url}`;
   }
 
+  /** File-type/size are still validated up front (same limits the backend enforces) before ever
+   *  opening the crop modal — no point letting someone crop a file that's going to be rejected
+   *  anyway. The crop step itself happens entirely client-side; see onAvatarCropped(). */
   onAvatarSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -79,8 +88,17 @@ export class ProfileSettingsComponent implements OnInit {
       return;
     }
 
+    this.pendingAvatarFile.set(file);
+  }
+
+  /** Cropped Blob → File (uploadAvatar's multipart body needs a filename) → the exact same
+   *  UserProfileService.uploadAvatar() call this component always made. */
+  onAvatarCropped(blob: Blob): void {
+    this.pendingAvatarFile.set(null);
+    const croppedFile = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
+
     this.avatarLoading.set(true);
-    this.userProfileService.uploadAvatar(file).subscribe({
+    this.userProfileService.uploadAvatar(croppedFile).subscribe({
       next: result => {
         this.avatarUrl.set(result.avatarUrl);
         this.avatarLoading.set(false);
@@ -92,9 +110,22 @@ export class ProfileSettingsComponent implements OnInit {
     });
   }
 
-  removeAvatar(): void {
+  onAvatarCropCancelled(): void {
+    this.pendingAvatarFile.set(null);
+  }
+
+  async removeAvatar(): Promise<void> {
     if (!this.avatarUrl() || this.avatarLoading()) return;
-    if (!confirm('Remove your profile photo?')) return;
+
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Remove Photo',
+      message: 'Remove your profile photo?',
+      confirmText: 'Remove',
+      confirmClass: 'btn-danger',
+      icon: 'bi-person-x',
+      iconColor: 'text-danger'
+    });
+    if (!confirmed) return;
 
     this.avatarLoading.set(true);
     this.userProfileService.removeAvatar().subscribe({

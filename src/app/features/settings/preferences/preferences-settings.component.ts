@@ -25,6 +25,7 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UserPreferencesService } from '../services/user-preferences.service';
 import { UserPreferencesDto } from '../models/settings.model';
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 
 interface PreferencesForm {
   language: string;
@@ -49,6 +50,7 @@ interface PreferencesForm {
 export class PreferencesSettingsComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly userPreferencesService = inject(UserPreferencesService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   protected readonly saving = signal(false);
   protected readonly saveSuccess = signal(false);
@@ -165,21 +167,30 @@ export class PreferencesSettingsComponent implements OnInit {
    * ──────────────────
    * Reset form to default values
    */
-  onResetDefaults(): void {
-    if (confirm('Reset all preferences to default values?')) {
-      this.form.reset({
-        language:            'en-US',
-        timezone:            'America/New_York',
-        dateFormat:          'MM/DD/YYYY',
-        timeFormat:          '12h',
-        theme:               'light',
-        itemsPerPage:        20,
-        enableNotifications: true,
-        emailDigest:         'daily',
-        compactView:         false,
-        showAvatars:         true
-      });
-    }
+  async onResetDefaults(): Promise<void> {
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Reset Preferences',
+      message: 'Reset all preferences to default values?',
+      confirmText: 'Reset',
+      cancelText: 'Cancel',
+      confirmClass: 'btn-warning',
+      icon: 'bi-arrow-counterclockwise',
+      iconColor: 'text-warning'
+    });
+    if (!confirmed) return;
+
+    this.form.reset({
+      language:            'en-US',
+      timezone:            'America/New_York',
+      dateFormat:          'MM/DD/YYYY',
+      timeFormat:          '12h',
+      theme:               'light',
+      itemsPerPage:        20,
+      enableNotifications: true,
+      emailDigest:         'daily',
+      compactView:         false,
+      showAvatars:         true
+    });
   }
 
   /**

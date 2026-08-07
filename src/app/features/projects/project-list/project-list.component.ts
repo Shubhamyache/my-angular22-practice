@@ -32,6 +32,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
 import { CurrencyFormatPipe } from '../../../shared/pipes/currency-format.pipe';
 import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-project-list',
@@ -50,6 +51,7 @@ export class ProjectListComponent implements OnInit {
   protected readonly store = inject(ProjectStore);
   private readonly projectService = inject(ProjectService);
   private readonly authService = inject(AuthService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   /** Create/edit/delete — Admin, Manager per §13 (HR is read-only on Projects; ownership of
    *  an individual project for a Manager is enforced by the backend via 403, not precomputed
@@ -126,12 +128,13 @@ export class ProjectListComponent implements OnInit {
    * directly without ever calling DELETE /projects/{id} — fixed to call the real endpoint
    * first (see EmployeeListComponent.confirmDelete for the same fix + rationale).
    */
-  confirmDelete(id: number, name: string): void {
-    if (confirm(`Are you sure you want to delete project "${name}"?`)) {
-      this.projectService.delete(id).subscribe({
-        next: () => this.store.removeProject(id)
-      });
-    }
+  async confirmDelete(id: number, name: string): Promise<void> {
+    const confirmed = await this.confirmDialog.confirmDelete(name);
+    if (!confirmed) return;
+
+    this.projectService.delete(id).subscribe({
+      next: () => this.store.removeProject(id)
+    });
   }
 
   /**

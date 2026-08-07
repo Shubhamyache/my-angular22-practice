@@ -11,6 +11,7 @@ import { TaskAttachmentService } from '../services/task-attachment.service';
 import { TaskAttachmentDto } from '../models/task-attachment.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { ApiError, getFieldError } from '../../../core/utils/api-error.util';
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = [
@@ -34,6 +35,7 @@ const ALLOWED_TYPES = [
 export class TaskAttachmentsComponent implements OnInit {
   private readonly taskAttachmentService = inject(TaskAttachmentService);
   private readonly authService = inject(AuthService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   readonly taskId = input.required<number>();
 
@@ -128,8 +130,9 @@ export class TaskAttachmentsComponent implements OnInit {
     });
   }
 
-  deleteAttachment(attachment: TaskAttachmentDto): void {
-    if (!confirm(`Delete "${attachment.fileName}"?`)) return;
+  async deleteAttachment(attachment: TaskAttachmentDto): Promise<void> {
+    const confirmed = await this.confirmDialog.confirmDelete(attachment.fileName);
+    if (!confirmed) return;
 
     this.deletingId.set(attachment.id);
     this.taskAttachmentService.delete(this.taskId(), attachment.id).subscribe({

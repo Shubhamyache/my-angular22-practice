@@ -75,3 +75,10 @@
     </button>
   </div>
 </form>
+
+@if (pendingAvatarFile(); as file) {
+  <app-avatar-crop-modal
+    [file]="file"
+    (cropped)="onAvatarCropped($event)"
+    (cancelled)="onAvatarCropCancelled()" />
+}

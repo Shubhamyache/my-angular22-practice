@@ -20,6 +20,7 @@ import { Project } from '../models/project.model';
 import { Employee } from '../../employees/models/employee.model';
 import { EmployeeService } from '../../employees/services/employee.service';
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-project-members',
@@ -33,6 +34,7 @@ export class ProjectMembersComponent implements OnInit {
   private readonly employeeService = inject(EmployeeService);
   private readonly route           = inject(ActivatedRoute);
   private readonly router          = inject(Router);
+  private readonly confirmDialog   = inject(ConfirmDialogService);
 
   private projectId = 0;
 
@@ -123,8 +125,16 @@ export class ProjectMembersComponent implements OnInit {
     });
   }
 
-  removeMember(employee: Employee): void {
-    if (!confirm(`Remove ${employee.firstName} ${employee.lastName} from this project?`)) return;
+  async removeMember(employee: Employee): Promise<void> {
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Remove Member',
+      message: `Remove ${employee.firstName} ${employee.lastName} from this project?`,
+      confirmText: 'Remove',
+      confirmClass: 'btn-danger',
+      icon: 'bi-person-dash',
+      iconColor: 'text-danger'
+    });
+    if (!confirmed) return;
 
     this.removingId.set(employee.id);
     this.projectService.removeMember(this.projectId, employee.id).subscribe({

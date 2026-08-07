@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { GeneralSettingsService } from '../services/general-settings.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-general-settings',
@@ -14,6 +15,7 @@ export class GeneralSettingsComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly generalSettingsService = inject(GeneralSettingsService);
   private readonly authService = inject(AuthService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   /** View is any authenticated user, edit is Admin-only (PartTwoUIIntegration.md §8) — the
    *  route itself is open to everyone now, this component enforces the write boundary. */
@@ -72,9 +74,20 @@ export class GeneralSettingsComponent implements OnInit {
     });
   }
 
-  onResetDefaults(): void {
-    if (this.canEdit && confirm('Reset all settings to default values?')) {
-      this.form.reset(this.defaults);
-    }
+  async onResetDefaults(): Promise<void> {
+    if (!this.canEdit) return;
+
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Reset Settings',
+      message: 'Reset all settings to default values?',
+      confirmText: 'Reset',
+      cancelText: 'Cancel',
+      confirmClass: 'btn-warning',
+      icon: 'bi-arrow-counterclockwise',
+      iconColor: 'text-warning'
+    });
+    if (!confirmed) return;
+
+    this.form.reset(this.defaults);
   }
 }

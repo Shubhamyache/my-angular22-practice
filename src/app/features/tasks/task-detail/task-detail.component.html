@@ -115,7 +115,7 @@
           </div>
         </div>
 
-        <app-task-comments [taskId]="t.id" [projectId]="t.projectId" />
+        <app-task-comments [taskId]="t.id" [projectId]="t.projectId" [highlightCommentId]="highlightCommentId" />
         <app-task-attachments [taskId]="t.id" />
       </div>
 
@@ -162,6 +162,24 @@
             <small class="text-muted">
               {{ (t.loggedHours / t.estimatedHours * 100).toFixed(1) }}% of estimate
             </small>
+
+            <!-- Time Log History -->
+            @if (!timeLogsLoading() && timeLogs().length > 0) {
+              <hr />
+              <label class="text-muted small fw-semibold mb-2 d-block">LOG HISTORY</label>
+              <ul class="list-unstyled d-flex flex-column gap-2 mb-0" style="max-height:220px;overflow-y:auto;">
+                @for (entry of timeLogs(); track entry.id) {
+                  <li class="border rounded-3 p-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span class="fw-semibold small">{{ entry.hours }}h {{ entry.minutes }}m</span>
+                      <span class="text-muted" style="font-size:0.7rem;">{{ entry.loggedAt | dateFormat:'short' }}</span>
+                    </div>
+                    <div class="text-muted small text-truncate" [title]="entry.description">{{ entry.description }}</div>
+                    <div class="text-muted" style="font-size:0.7rem;">{{ entry.employeeName }}</div>
+                  </li>
+                }
+              </ul>
+            }
           </div>
         </div>
 
@@ -172,20 +190,95 @@
               <i class="bi bi-lightning-fill me-2 text-warning"></i>Quick Actions
             </h5>
           </div>
-          <div class="card-body d-grid gap-2">
-            <button class="btn btn-outline-primary" [disabled]="loggingTime()" (click)="logTime()">
-              @if (loggingTime()) {
-                <span class="spinner-border spinner-border-sm me-2"></span>Logging…
-              } @else {
-                <i class="bi bi-clock-history me-2"></i>Log Time
-              }
+          <div class="card-body d-grid gap-3">
+
+            <!-- Status change — hidden entirely once the task is Done (terminal, §3 of the UI
+                 change request) or if the current user has no permission to change it. -->
+            @if (canAct()) {
+              <div>
+                <label class="text-muted small fw-semibold mb-1 d-block">STATUS</label>
+                @if (t.status === 'Done') {
+                  <div class="alert alert-success py-2 px-3 mb-0 small d-flex align-items-center gap-2">
+                    <i class="bi bi-check-circle-fill"></i> Task completed — no further status changes.
+                  </div>
+                } @else {
+                  <select
+                    class="form-select form-select-sm"
+                    [disabled]="changingStatus()"
+                    [value]="t.status"
+                    (change)="onStatusChange($event)">
+                    @for (s of statusOptions; track s) {
+                      <option [value]="s">{{ statusConfig[s].label }}</option>
+                    }
+                  </select>
+                }
+              </div>
+            }
+
+            <button class="btn btn-outline-primary" [disabled]="!canAct() || loggingTime()" (click)="openLogTimeModal()">
+              <i class="bi bi-clock-history me-2"></i>Log Time
             </button>
+            @if (!canAct()) {
+              <small class="text-muted">Only the assignee, Admins, or Managers can log time.</small>
+            }
           </div>
         </div>
 
       </div>
 
     </div>
+
+    <!-- Log Time Modal — replaces the old prompt()/alert() flow with hours + minutes + a
+         required description, all validated via Reactive Forms (logTimeForm). -->
+    @if (logTimeModalOpen()) {
+      <app-modal title="Log Time" size="sm" (closed)="closeLogTimeModal()">
+        <form [formGroup]="logTimeForm" (ngSubmit)="submitLogTime()">
+          @if (logTimeError()) {
+            <div class="alert alert-danger py-2 small">{{ logTimeError() }}</div>
+          }
+
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Hours</label>
+              <input type="number" class="form-control" formControlName="hours" min="0" max="24" />
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Minutes</label>
+              <input type="number" class="form-control" formControlName="minutes" min="0" max="59" />
+            </div>
+          </div>
+          @if (logTimeForm.errors?.['noTimeLogged'] && (logTimeForm.get('hours')?.touched || logTimeForm.get('minutes')?.touched)) {
+            <div class="text-danger small mb-2">Enter at least some time (hours or minutes).</div>
+          }
+
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Description</label>
+            <textarea
+              class="form-control"
+              rows="3"
+              formControlName="description"
+              placeholder="What did you work on?"
+              [attr.maxlength]="500"></textarea>
+            @if (logTimeForm.get('description')?.invalid && logTimeForm.get('description')?.touched) {
+              <div class="text-danger small mt-1">Description is required (max 500 characters).</div>
+            }
+          </div>
+        </form>
+
+        <div modal-footer class="d-flex gap-2">
+          <button type="button" class="btn btn-outline-secondary" [disabled]="loggingTime()" (click)="closeLogTimeModal()">
+            Cancel
+          </button>
+          <button type="button" class="btn btn-primary" [disabled]="loggingTime()" (click)="submitLogTime()">
+            @if (loggingTime()) {
+              <span class="spinner-border spinner-border-sm me-2"></span>Saving…
+            } @else {
+              Save
+            }
+          </button>
+        </div>
+      </app-modal>
+    }
 
   }
 

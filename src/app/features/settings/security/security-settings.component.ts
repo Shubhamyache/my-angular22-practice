@@ -7,6 +7,7 @@ import { ErrorHandlerService } from '../../../core/services/error-handler.servic
 import { AuthService } from '../../../core/services/auth.service';
 import { ApiError, getFieldError } from '../../../core/utils/api-error.util';
 import { TwoFactorModalComponent } from '../two-factor-modal/two-factor-modal.component';
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 
 const SESSIONS_PAGE_SIZE = 10;
 
@@ -22,6 +23,7 @@ export class SecuritySettingsComponent implements OnInit {
   private readonly securityService = inject(SecurityService);
   private readonly errorHandler    = inject(ErrorHandlerService);
   private readonly authService     = inject(AuthService);
+  private readonly confirmDialog   = inject(ConfirmDialogService);
 
   protected readonly passwordForm = this.fb.group({
     current: ['', Validators.required],
@@ -112,9 +114,18 @@ export class SecuritySettingsComponent implements OnInit {
     });
   }
 
-  revokeSession(session: SessionDto): void {
+  async revokeSession(session: SessionDto): Promise<void> {
     if (session.isCurrent) return;
-    if (!confirm('Revoke this session? That device will be signed out.')) return;
+
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Revoke Session',
+      message: 'Revoke this session? That device will be signed out.',
+      confirmText: 'Revoke',
+      confirmClass: 'btn-danger',
+      icon: 'bi-shield-x',
+      iconColor: 'text-danger'
+    });
+    if (!confirmed) return;
 
     this.revokingId.set(session.id);
     this.securityService.revokeSession(session.id).subscribe({

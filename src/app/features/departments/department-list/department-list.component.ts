@@ -4,6 +4,7 @@ import { DepartmentService } from '../services/department.service';
 import { Department } from '../models/department.model';
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
 import { AuthService } from '../../../core/services/auth.service';
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-department-list',
@@ -15,6 +16,7 @@ import { AuthService } from '../../../core/services/auth.service';
 export class DepartmentListComponent implements OnInit {
   private readonly departmentService = inject(DepartmentService);
   private readonly authService       = inject(AuthService);
+  private readonly confirmDialog     = inject(ConfirmDialogService);
 
   /** Create/edit/delete — Admin, HR per §13 (Manager/Employee are view-only on Departments). */
   protected readonly canManageDepartments = ['Admin', 'HR'].includes(this.authService.getUserRole());
@@ -52,8 +54,9 @@ export class DepartmentListComponent implements OnInit {
    * there is nothing to reconcile client-side, just let that response come back and stop
    * spinning.
    */
-  confirmDelete(id: number, name: string): void {
-    if (!confirm(`Are you sure you want to delete department "${name}"?`)) return;
+  async confirmDelete(id: number, name: string): Promise<void> {
+    const confirmed = await this.confirmDialog.confirmDelete(name);
+    if (!confirmed) return;
 
     this.deletingIds.update(ids => new Set(ids).add(id));
     this.departmentService.delete(id).subscribe({

@@ -30,6 +30,7 @@ import { ProjectService } from '../../projects/services/project.service';
 import { Employee } from '../../employees/models/employee.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { ApiError } from '../../../core/utils/api-error.util';
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 
 const MAX_COMMENT_LENGTH = 1000;
 
@@ -49,15 +50,24 @@ export class TaskCommentsComponent implements OnInit {
   private readonly taskCommentService = inject(TaskCommentService);
   private readonly projectService = inject(ProjectService);
   private readonly authService = inject(AuthService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   readonly taskId    = input.required<number>();
   readonly projectId = input.required<number>();
+  /** Set from ?commentId= on /tasks/:id — see TaskDetailComponent. Scrolls to and briefly
+   *  highlights that comment once loaded, for the "take me to the mention" email link
+   *  (PartNineBEChannges.md documents the backend side of that link). */
+  readonly highlightCommentId = input<number | null>(null);
 
   @ViewChild('draftInput') draftInputRef?: ElementRef<HTMLTextAreaElement>;
 
   protected readonly comments = signal<TaskCommentDto[]>([]);
   protected readonly loading  = signal(true);
   protected readonly error    = signal<string | null>(null);
+
+  /** Non-null for a few seconds right after load, to drive a temporary highlight style — see
+   *  scrollToHighlighted(). */
+  protected readonly activeHighlightId = signal<number | null>(null);
 
   protected readonly draft      = signal('');
   protected readonly posting    = signal(false);
@@ -79,6 +89,7 @@ export class TaskCommentsComponent implements OnInit {
       next: comments => {
         this.comments.set(comments);
         this.loading.set(false);
+        this.scrollToHighlighted();
       },
       error: (err: Error) => {
         this.error.set(err.message);
@@ -91,6 +102,21 @@ export class TaskCommentsComponent implements OnInit {
     this.projectService.getMembers(this.projectId()).subscribe({
       next: members => this.projectMembers.set(members)
     });
+  }
+
+  /** Scrolls to and briefly highlights the comment named by highlightCommentId(), if it's
+   *  actually present in what just loaded (it may not be — e.g. the comment was deleted after
+   *  the mention email was sent). Runs once per component instance, right after the initial
+   *  load; not tied to a signal effect since there's nothing to re-run for. */
+  private scrollToHighlighted(): void {
+    const id = this.highlightCommentId();
+    if (id === null || !this.comments().some(c => c.id === id)) return;
+
+    this.activeHighlightId.set(id);
+    queueMicrotask(() => {
+      document.getElementById(`comment-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    setTimeout(() => this.activeHighlightId.set(null), 3000);
   }
 
   canDelete(comment: TaskCommentDto): boolean {
@@ -212,8 +238,16 @@ export class TaskCommentsComponent implements OnInit {
     });
   }
 
-  deleteComment(comment: TaskCommentDto): void {
-    if (!confirm('Delete this comment?')) return;
+  async deleteComment(comment: TaskCommentDto): Promise<void> {
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Delete Comment',
+      message: 'Delete this comment? This action cannot be undone.',
+      confirmText: 'Delete',
+      confirmClass: 'btn-danger',
+      icon: 'bi-trash3',
+      iconColor: 'text-danger'
+    });
+    if (!confirmed) return;
 
     this.deletingId.set(comment.id);
     this.taskCommentService.delete(this.taskId(), comment.id).subscribe({
