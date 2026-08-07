@@ -60,8 +60,13 @@
         <span class="text-primary">{{ authService.getUserName() || 'Administrator' }}</span>
       </h4>
       <p class="text-muted mb-0 small">
-        <i class="bi bi-building me-1"></i>
-        Here's what's happening across your organization today.
+        @if (isEmployee) {
+          <i class="bi bi-person-check me-1"></i>
+          Here's what's happening with your work today.
+        } @else {
+          <i class="bi bi-building me-1"></i>
+          Here's what's happening across your organization today.
+        }
       </p>
     </div>
 
@@ -128,6 +133,51 @@
           <app-stats-card [loading]="true" />
         </div>
       }
+
+    } @else if (isEmployee) {
+      <!--
+        EMPLOYEE STATS — personal counts only (no headcount/department/org-wide numbers).
+        employeeStats() comes from DashboardService.loadEmployeeDashboard(), computed from the
+        role-scoped GET /tasks + GET /projects responses — see that method's docblock.
+        No [change] (no "vs last month" history for these client-computed counts), so the
+        trend-arrow row simply doesn't render (StatsCardComponent treats null change as "omit").
+      -->
+      <div class="col-12 col-sm-6 col-xl-3">
+        <a routerLink="/tasks" class="text-decoration-none text-reset d-block h-100">
+          <app-stats-card
+            label="My Pending Tasks"
+            [value]="employeeStats()!.myPendingTasks"
+            icon="bi-check2-square"
+            color="warning" />
+        </a>
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <a routerLink="/tasks" class="text-decoration-none text-reset d-block h-100">
+          <app-stats-card
+            label="Overdue Tasks"
+            [value]="employeeStats()!.myOverdueTasks"
+            icon="bi-exclamation-triangle-fill"
+            color="danger" />
+        </a>
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <a routerLink="/tasks" class="text-decoration-none text-reset d-block h-100">
+          <app-stats-card
+            label="Completed Tasks"
+            [value]="employeeStats()!.myCompletedTasks"
+            icon="bi-check-circle-fill"
+            color="success" />
+        </a>
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <a routerLink="/projects" class="text-decoration-none text-reset d-block h-100">
+          <app-stats-card
+            label="My Active Projects"
+            [value]="employeeStats()!.myActiveProjects"
+            icon="bi-kanban-fill"
+            color="primary" />
+        </a>
+      </div>
 
     } @else {
       <!--
@@ -226,50 +276,75 @@
       <app-quick-actions [actions]="quickActions" />
     </div>
 
-    <!-- ── SECTION 5: Recent Employees + Recent Tasks ────────────── -->
-    <!--
-      Bootstrap 12-column grid:
-        col-12        → full width on all screens (default)
-        col-lg-8      → 8 of 12 columns on large screens (≥992px)
-        col-lg-4      → 4 of 12 columns on large screens
+    @if (isEmployee) {
 
-      On mobile: both columns are col-12 → stack vertically.
-      On desktop: side by side, 2:1 ratio.
-    -->
-    <div class="row g-4 mb-4">
-
-      <div class="col-12 col-lg-8">
-        <!--
-          [employees]="employees()" — passes the computed signal VALUE.
-          employees() evaluates the computed signal → returns RecentEmployee[].
-          The child component receives it as a Signal Input: input<RecentEmployee[]>([]).
-
-          SIGNAL PROPAGATION CHAIN:
-            dashService._summary (source)
-              → summary (readonly alias)
-                → employees (computed in DashboardComponent)
-                  → RecentEmployeesComponent.employees (signal input)
-                    → @for rows in child template
-
-          When summary changes → employees computed is marked dirty →
-          when the child template reads employees() → it re-evaluates →
-          new value → Angular re-renders the table rows.
-        -->
-        <app-recent-employees [employees]="employees()" />
+      <!-- ── EMPLOYEE VIEW — Recent sections ──────────────────────
+        No Recent Employees widget at all (an Employee has no org directory access — see
+        sidebar.component.ts's Employees nav item roles). My Tasks and My Projects both reuse
+        the SAME RecentTasksComponent/RecentProjectsComponent the admin view uses, just fed
+        myTasks()/myProjects() (role-scoped, from DashboardService.loadEmployeeDashboard())
+        instead of the org-wide employees()/tasks()/projects() computed signals above.
+      -->
+      <div class="row g-4 mb-4">
+        <div class="col-12">
+          <app-recent-tasks [tasks]="myTasks()" />
+        </div>
       </div>
 
-      <div class="col-12 col-lg-4">
-        <app-recent-tasks [tasks]="tasks()" />
+      <div class="row g-4 mb-2">
+        <div class="col-12">
+          <app-recent-projects [projects]="myProjects()" />
+        </div>
       </div>
 
-    </div>
+    } @else {
 
-    <!-- ── SECTION 6: Recent Projects ───────────────────────────── -->
-    <div class="row g-4 mb-2">
-      <div class="col-12">
-        <app-recent-projects [projects]="projects()" />
+      <!-- ── SECTION 5: Recent Employees + Recent Tasks ────────────── -->
+      <!--
+        Bootstrap 12-column grid:
+          col-12        → full width on all screens (default)
+          col-lg-8      → 8 of 12 columns on large screens (≥992px)
+          col-lg-4      → 4 of 12 columns on large screens
+
+        On mobile: both columns are col-12 → stack vertically.
+        On desktop: side by side, 2:1 ratio.
+      -->
+      <div class="row g-4 mb-4">
+
+        <div class="col-12 col-lg-8">
+          <!--
+            [employees]="employees()" — passes the computed signal VALUE.
+            employees() evaluates the computed signal → returns RecentEmployee[].
+            The child component receives it as a Signal Input: input<RecentEmployee[]>([]).
+
+            SIGNAL PROPAGATION CHAIN:
+              dashService._summary (source)
+                → summary (readonly alias)
+                  → employees (computed in DashboardComponent)
+                    → RecentEmployeesComponent.employees (signal input)
+                      → @for rows in child template
+
+            When summary changes → employees computed is marked dirty →
+            when the child template reads employees() → it re-evaluates →
+            new value → Angular re-renders the table rows.
+          -->
+          <app-recent-employees [employees]="employees()" />
+        </div>
+
+        <div class="col-12 col-lg-4">
+          <app-recent-tasks [tasks]="tasks()" />
+        </div>
+
       </div>
-    </div>
+
+      <!-- ── SECTION 6: Recent Projects ───────────────────────────── -->
+      <div class="row g-4 mb-2">
+        <div class="col-12">
+          <app-recent-projects [projects]="projects()" />
+        </div>
+      </div>
+
+    }
 
   } <!-- end @if (hasData()) -->
 

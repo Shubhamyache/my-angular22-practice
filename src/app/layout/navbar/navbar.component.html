@@ -69,33 +69,13 @@
       <!-- Notification bell with real unread-count + dropdown panel -->
       <app-notification-bell />
 
-      <!-- User info (hidden on small screens) -->
-      <div class="d-none d-md-flex align-items-center gap-2 mx-2 ps-2 border-start border-secondary">
-        <!-- Avatar circle with user initial -->
-        <div
-          class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white fw-bold"
-          style="width:32px;height:32px;font-size:0.75rem;flex-shrink:0;">
-          {{ userInitial }}
-        </div>
-        <!-- Name + role (hidden on md, visible lg+) -->
-        <div class="d-none d-lg-block lh-sm">
-          <div class="text-white fw-semibold" style="font-size:0.8rem;">
-            {{ authService.getUserName() || 'Administrator' }}
-          </div>
-          <div class="text-secondary text-uppercase" style="font-size:0.65rem;letter-spacing:0.06em;">
-            {{ authService.getUserRole() || 'Admin' }}
-          </div>
-        </div>
-      </div>
-
-      <!-- Logout button -->
-      <button
-        class="btn btn-outline-danger btn-sm"
-        (click)="logout()"
-        title="Logout">
-        <i class="bi bi-box-arrow-right"></i>
-        <span class="d-none d-lg-inline ms-1">Logout</span>
-      </button>
+      <!--
+        Profile menu — avatar (photo or FirstName+LastName initials) + name/role, opens a
+        dropdown with Settings and Logout. Its own component (mirrors NotificationBellComponent's
+        self-contained click-outside-to-close pattern) so the navbar doesn't need to own that
+        open/close state or Logout's HTTP call itself.
+      -->
+      <app-profile-menu />
 
     </div>
   </div>

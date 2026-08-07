@@ -34,6 +34,23 @@ const QUICK_ACTIONS: QuickAction[] = [
 ];
 
 /**
+ * EMPLOYEE QUICK ACTIONS
+ * ──────────────────────
+ * Deliberately a SEPARATE list rather than a filtered subset of QUICK_ACTIONS above — the admin
+ * list's "Add Employee" / "Departments" / "Payroll" entries route to screens an Employee either
+ * can't reach (roleGuard-blocked) or has no reason to open. Only actions the Employee role can
+ * actually use are listed: their own tasks, the Kanban board (where canChangeTaskStatus lets an
+ * Employee drag their own assigned tasks), and their assigned projects. Payroll is intentionally
+ * excluded — the Employee role has no self-service "My Payslips" screen yet (see
+ * PartEigthBEChanges.md), so a Payroll shortcut would just 403.
+ */
+const EMPLOYEE_QUICK_ACTIONS: QuickAction[] = [
+  { label: 'My Tasks',    icon: 'bi-check2-square', route: '/tasks',       color: 'warning', description: 'View your assigned tasks' },
+  { label: 'Task Board',  icon: 'bi-kanban-fill',    route: '/tasks/board', color: 'primary', description: 'Update task status'       },
+  { label: 'My Projects', icon: 'bi-diagram-3-fill', route: '/projects',    color: 'success', description: 'View your projects'       },
+];
+
+/**
  * ═══════════════════════════════════════════════════════════════════
  * DASHBOARD COMPONENT — Smart / Container Component
  * ═══════════════════════════════════════════════════════════════════
@@ -135,8 +152,17 @@ export class DashboardComponent {
   protected readonly dashService  = inject(DashboardService);
   protected readonly authService  = inject(AuthService);
 
+  /**
+   * Role is fixed for the lifetime of this component (a role change means a re-login, which
+   * destroys and recreates the whole shell) — so this is a plain boolean read once at
+   * construction, not a computed() signal re-evaluated on every change detection pass.
+   */
+  protected readonly isEmployee = this.authService.getUserRole() === 'Employee';
+
   // ── Static data (no signals needed for immutable config) ─────────
-  protected readonly quickActions = QUICK_ACTIONS;
+  // Which list is picked depends on role — see EMPLOYEE_QUICK_ACTIONS' docblock for why this
+  // isn't just QUICK_ACTIONS.filter(...).
+  protected readonly quickActions = this.isEmployee ? EMPLOYEE_QUICK_ACTIONS : QUICK_ACTIONS;
 
   // ── For skeleton @for loops ───────────────────────────────────────
   // A simple array used to render 4 skeleton cards in the template.
@@ -180,9 +206,16 @@ export class DashboardComponent {
   protected readonly projects  = computed(() => this.dashService.summary()?.recentProjects  ?? []);
   protected readonly tasks     = computed(() => this.dashService.summary()?.recentTasks     ?? []);
   protected readonly lastUpdated = computed(() => {
-    const d = this.dashService.summary()?.lastUpdated;
+    const d = this.isEmployee
+      ? this.dashService.employeeSummary()?.lastUpdated
+      : this.dashService.summary()?.lastUpdated;
     return d ? new Date(d) : null;
   });
+
+  // ── Employee-scoped signals — read by the @if (isEmployee) branch of the template ──
+  protected readonly employeeStats = computed(() => this.dashService.employeeSummary()?.stats);
+  protected readonly myTasks       = computed(() => this.dashService.employeeSummary()?.myTasks    ?? []);
+  protected readonly myProjects    = computed(() => this.dashService.employeeSummary()?.myProjects ?? []);
 
   // ── Local UI State ───────────────────────────────────────────────
   // This signal is LOCAL to this component — it doesn't belong in the service.
@@ -239,6 +272,16 @@ export class DashboardComponent {
     });
 
     effect(() => {
+      const summary = this.dashService.employeeSummary();
+      if (summary) {
+        console.log(
+          `[Dashboard] Loaded (employee view) — pending: ${summary.stats.myPendingTasks},` +
+          ` overdue: ${summary.stats.myOverdueTasks}, active projects: ${summary.stats.myActiveProjects}`
+        );
+      }
+    });
+
+    effect(() => {
       const err = this.dashService.error();
       if (err) {
         console.error('[Dashboard] Error:', err);
@@ -256,12 +299,24 @@ export class DashboardComponent {
      *
      * The service guard (if (this._loading()) return) prevents double-fetch
      * if loadDashboard() is somehow called twice.
+     *
+     * Which method runs depends on role: Employee gets the personalized load (built from
+     * GET /tasks + GET /projects — see DashboardService.loadEmployeeDashboard's docblock),
+     * everyone else gets the existing org-wide GET /api/v1/dashboard load, unchanged.
      */
-    this.dashService.loadDashboard();
+    if (this.isEmployee) {
+      this.dashService.loadEmployeeDashboard();
+    } else {
+      this.dashService.loadDashboard();
+    }
   }
 
   protected onRefresh(): void {
-    this.dashService.refresh();
+    if (this.isEmployee) {
+      this.dashService.refreshEmployee();
+    } else {
+      this.dashService.refresh();
+    }
   }
 
   protected getGreeting(): string {

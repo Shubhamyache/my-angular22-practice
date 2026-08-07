@@ -1,0 +1,65 @@
+<div class="position-relative">
+
+  <!--
+    Toggle button — visible at EVERY breakpoint (unlike the old avatar block, which was
+    `d-none d-md-flex`). It must stay visible on mobile too: Settings/Logout now live only
+    inside this dropdown, so a mobile user with no other way to reach them would be stuck
+    logged in with no way out if this button disappeared below md.
+  -->
+  <button
+    type="button"
+    class="btn btn-link text-decoration-none p-1 d-flex align-items-center gap-2 mx-1 ms-2 ps-2 border-start border-secondary"
+    (click)="toggle()"
+    title="Account menu">
+
+    @if (avatarSrc(); as src) {
+      <img [src]="src" alt="Profile photo" class="rounded-circle flex-shrink-0"
+           style="width:32px;height:32px;object-fit:cover;" />
+    } @else {
+      <!-- Initials fallback: FirstName + LastName, e.g. "Nitish Reddy" → "NR" -->
+      <div
+        class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white fw-bold"
+        style="width:32px;height:32px;font-size:0.75rem;flex-shrink:0;">
+        {{ initials() }}
+      </div>
+    }
+
+    <!-- Name + role — hidden below lg, same breakpoint the old navbar used. -->
+    <div class="d-none d-lg-block lh-sm text-start">
+      <div class="text-white fw-semibold" style="font-size:0.8rem;">
+        {{ currentUser()?.fullName || 'User' }}
+      </div>
+      <div class="text-secondary text-uppercase" style="font-size:0.65rem;letter-spacing:0.06em;">
+        {{ currentUser()?.role || '' }}
+      </div>
+    </div>
+
+    <i class="bi bi-chevron-down text-secondary d-none d-sm-inline" style="font-size:0.65rem;"></i>
+  </button>
+
+  @if (open()) {
+    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 show position-absolute mt-2"
+        style="min-width:220px; z-index:1060; top:100%;">
+      <li class="px-3 py-2 border-bottom mb-1">
+        <div class="fw-semibold text-truncate" style="font-size:0.85rem;">
+          {{ currentUser()?.fullName || 'User' }}
+        </div>
+        <div class="text-muted text-truncate" style="font-size:0.75rem;">
+          {{ currentUser()?.email }}
+        </div>
+      </li>
+      <li>
+        <a routerLink="/settings" class="dropdown-item" (click)="close()">
+          <i class="bi bi-gear-fill me-2"></i>Settings
+        </a>
+      </li>
+      <li><hr class="dropdown-divider" /></li>
+      <li>
+        <button type="button" class="dropdown-item text-danger" (click)="logout()">
+          <i class="bi bi-box-arrow-right me-2"></i>Logout
+        </button>
+      </li>
+    </ul>
+  }
+
+</div>

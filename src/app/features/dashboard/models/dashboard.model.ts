@@ -115,3 +115,27 @@ export interface DashboardSummary {
   recentTasks:     RecentTask[];
   lastUpdated:     Date;
 }
+
+/**
+ * ═══════════════════════════════════════════════════════════════════
+ * EMPLOYEE-SCOPED DASHBOARD — personalized view for the 'Employee' role
+ * ═══════════════════════════════════════════════════════════════════
+ * Unlike DashboardSummary above (built from GET /api/v1/dashboard, which is NOT role-scoped —
+ * see PartEigthBEChanges.md), this shape is built entirely client-side in DashboardService from
+ * GET /tasks and GET /projects. Those two endpoints ARE already server-side role-scoped
+ * (tasks.routes.ts / projects.routes.ts: "Employee sees assigned/member-of tasks|projects"), so
+ * no extra backend work is needed to show an employee only their own work.
+ */
+export interface EmployeeDashboardStats {
+  myPendingTasks:   number; // assigned tasks not yet Done
+  myOverdueTasks:   number; // assigned tasks not yet Done, past due date
+  myCompletedTasks: number; // assigned tasks with status Done
+  myActiveProjects: number; // member-of projects with status Active
+}
+
+export interface EmployeeDashboardSummary {
+  stats:       EmployeeDashboardStats;
+  myTasks:     RecentTask[];    // reuses the existing widget-facing shape — same RecentTasksComponent
+  myProjects:  RecentProject[]; // reuses the existing widget-facing shape — same RecentProjectsComponent
+  lastUpdated: Date;
+}

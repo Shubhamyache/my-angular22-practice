@@ -40,6 +40,12 @@ export interface CurrentUserDto {
   employeeId: number | null;
   isEmailVerified: boolean;
   twoFactorEnabled: boolean;
+  /**
+   * Not yet returned by GET /auth/me — see PartEigthBEChanges.md. Optional so this type change
+   * doesn't break until the backend adds it; the navbar profile avatar falls back to initials
+   * (getInitials(fullName)) whenever this is undefined/null.
+   */
+  avatarUrl?: string | null;
 }
 
 /** Decoded shape of the JWT access token's payload (client-side decode only, never trusted as verification). */

@@ -56,7 +56,10 @@ export class SidebarComponent {
     {
       heading: 'HR & Finance',
       items: [
-        { label: 'Departments', icon: 'bi-diagram-3-fill', route: '/departments' },
+        // Departments: Admin only. Not gated by a roleGuard at the route level (list/detail are
+        // reachable by any role, matching the DEPARTMENT_ROUTES comment — only create/edit are
+        // guarded), so this is a nav-visibility-only restriction, same pattern as Employees below.
+        { label: 'Departments', icon: 'bi-diagram-3-fill', route: '/departments', roles: ['Admin'] },
         // Payroll: Admin/HR only per §13 (matches the existing roleGuard on the /payroll route).
         { label: 'Payroll',     icon: 'bi-cash-coin',      route: '/payroll', roles: ['Admin', 'HR'] },
         // Reports: Employee has zero access to the Reports controller per §4/§13.

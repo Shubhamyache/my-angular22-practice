@@ -147,6 +147,17 @@ export function getInitials(name: string): string {
 }
 
 /**
+ * Resolves a (relative) avatarUrl — e.g. "/uploads/avatars/3f2a....png" — against the backend
+ * origin, for use in <img [src]>. Shared by every place that renders a user's photo (navbar,
+ * profile settings) so there's exactly one place that knows this contract; see
+ * environment.ts's `backendOrigin` comment for why dev vs prod need different prefixes.
+ * @example resolveAvatarSrc('/uploads/avatars/x.png') → '/uploads/avatars/x.png' (dev, via proxy)
+ */
+export function resolveAvatarSrc(avatarUrl: string, backendOrigin: string): string {
+  return `${backendOrigin}${avatarUrl}`;
+}
+
+/**
  * DATE UTILITIES
  * ═══════════════════════════════════════════════════════════════════
  */
