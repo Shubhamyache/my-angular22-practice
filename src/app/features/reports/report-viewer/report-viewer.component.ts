@@ -2,11 +2,12 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { ReportService } from '../services/report.service';
 import { ReportDto } from '../models/report.model';
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
+import { ReportPreviewModalComponent } from '../report-preview-modal/report-preview-modal.component';
 
 @Component({
   selector: 'app-report-viewer',
   standalone: true,
-  imports: [LoaderComponent],
+  imports: [LoaderComponent, ReportPreviewModalComponent],
   templateUrl: './report-viewer.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -16,10 +17,11 @@ export class ReportViewerComponent implements OnInit {
   protected readonly reports = signal<ReportDto[]>([]);
   protected readonly loading = signal(true);
   protected readonly error   = signal<string | null>(null);
-  protected readonly generatingId = signal<string | null>(null);
-  // Separate from `error` (which gates the whole page's loading/error/list state) so a failed
-  // PDF generation shows a small inline notice without hiding the entire report grid.
-  protected readonly generateError = signal<string | null>(null);
+
+  /** The report currently open in the preview modal, or null when the modal is closed. Download
+   *  itself (both PDF and Excel) now happens inside ReportPreviewModalComponent — see that
+   *  component for the actual generate()/blob-download flow. */
+  protected readonly selectedReport = signal<ReportDto | null>(null);
 
   ngOnInit(): void {
     this.reportService.getAvailable().subscribe({
@@ -36,30 +38,16 @@ export class ReportViewerComponent implements OnInit {
 
   /**
    * NOTE: `payroll-history` requires an `employeeId` parameter (UIIntegrationInfo.md §4) that
-   * this screen has no input for — clicking Generate for that report will surface the
-   * backend's 400 "employeeId parameter is required" via `error()` below, same as any other
-   * validation failure. Not silently special-cased or hidden — there's simply no parameter
+   * this screen has no input for — opening the preview for that report will surface the
+   * backend's 400 "employeeId parameter is required" via the modal's own `error()`, same as any
+   * other validation failure. Not silently special-cased or hidden — there's simply no parameter
    * UI to build here without adding a new component, which is out of scope for this migration.
    */
-  generateReport(reportId: string): void {
-    if (this.generatingId()) return;
-    this.generatingId.set(reportId);
-    this.generateError.set(null);
+  openPreview(report: ReportDto): void {
+    this.selectedReport.set(report);
+  }
 
-    this.reportService.generate(reportId, { parameters: null }).subscribe({
-      next: ({ blob, filename }) => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        a.click();
-        URL.revokeObjectURL(url);
-        this.generatingId.set(null);
-      },
-      error: (err: Error) => {
-        this.generateError.set(err.message);
-        this.generatingId.set(null);
-      }
-    });
+  closePreview(): void {
+    this.selectedReport.set(null);
   }
 }

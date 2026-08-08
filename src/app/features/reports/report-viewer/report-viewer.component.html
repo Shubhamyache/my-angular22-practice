@@ -6,14 +6,6 @@
     <p class="text-muted small mb-0">Generate and export reports from the .NET 10 API</p>
   </div>
 
-  @if (generateError()) {
-    <div class="alert alert-danger alert-dismissible d-flex align-items-center gap-2">
-      <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
-      <span>{{ generateError() }}</span>
-      <button type="button" class="btn-close ms-auto" (click)="generateError.set(null)"></button>
-    </div>
-  }
-
   @if (loading()) {
     <app-loader />
   } @else if (error()) {
@@ -38,13 +30,8 @@
             <div class="card-footer bg-white border-0 pt-0">
               <button
                 class="btn btn-outline-info btn-sm w-100"
-                (click)="generateReport(report.id)"
-                [disabled]="generatingId() === report.id">
-                @if (generatingId() === report.id) {
-                  <span class="spinner-border spinner-border-sm me-2"></span>Generating…
-                } @else {
-                  <i class="bi bi-download me-1"></i> Generate & Export PDF
-                }
+                (click)="openPreview(report)">
+                <i class="bi bi-download me-1"></i> Download
               </button>
             </div>
           </div>
@@ -56,5 +43,12 @@
         </div>
       }
     </div>
+  }
+
+  @if (selectedReport(); as report) {
+    <app-report-preview-modal
+      [reportId]="report.id"
+      [reportName]="report.name"
+      (closed)="closePreview()" />
   }
 </div>
