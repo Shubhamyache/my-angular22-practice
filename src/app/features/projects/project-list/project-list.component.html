@@ -127,7 +127,14 @@
     <div class="row g-4">
       @for (project of store.filteredProjects(); track project.id) {
         <div class="col-12 col-md-6 col-xl-4">
-          <div class="card border-0 shadow-sm h-100 hover-lift" style="transition: transform 0.2s;">
+          <div
+            class="card border-0 shadow-sm h-100 hover-lift"
+            style="transition: transform 0.2s; cursor: pointer;"
+            role="button"
+            tabindex="0"
+            [routerLink]="[project.id]"
+            (keydown.enter)="$any($event.currentTarget).click()"
+            (keydown.space)="$event.preventDefault(); $any($event.currentTarget).click()">
             <div class="card-body">
 
               <!-- Header: Priority + Title + Status -->
@@ -189,12 +196,12 @@
                 </div>
               </div>
 
-              <!-- Actions -->
-              <div class="d-flex gap-1 justify-content-end">
-                <a [routerLink]="[project.id]" class="btn btn-sm btn-outline-primary" title="View Details">
-                  <i class="bi bi-eye"></i>
-                </a>
-                @if (canManageProjects) {
+              <!-- Actions — the whole card now navigates to the project (see [routerLink] on the
+                   card wrapper above), so the old "View Details" eye button is redundant. Edit/
+                   Delete stay, but stop propagation so clicking them doesn't also bubble up and
+                   trigger the card's own navigation. -->
+              @if (canManageProjects) {
+                <div class="d-flex gap-1 justify-content-end" (click)="$event.stopPropagation()">
                   <a [routerLink]="[project.id, 'edit']" class="btn btn-sm btn-outline-warning" title="Edit">
                     <i class="bi bi-pencil"></i>
                   </a>
@@ -204,8 +211,8 @@
                     (click)="confirmDelete(project.id, project.name)">
                     <i class="bi bi-trash"></i>
                   </button>
-                }
-              </div>
+                </div>
+              }
             </div>
 
             <!-- Footer: Manager + Dates -->

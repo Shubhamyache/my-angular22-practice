@@ -12,6 +12,7 @@ export * from './components/input/input.component';
 export * from './components/loader/loader.component';
 export * from './components/modal/modal.component';
 export * from './components/table/table.component';
+export * from './components/sortable-header/sortable-header.component';
 export * from './components/toast/toast.component';
 export * from './components/search-box/search-box.component';
 export * from './components/pagination/pagination.component';

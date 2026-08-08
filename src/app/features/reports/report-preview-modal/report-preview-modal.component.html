@@ -19,6 +19,9 @@
     <app-table
       [columns]="columns()"
       [rows]="pagedRows()"
+      [sortBy]="sortColumn()"
+      [sortDirection]="sortDirection()"
+      (sortChange)="onSortChange($event)"
       emptyMessage="This report has no data to preview." />
 
     @if (totalRows() > pageSize()) {

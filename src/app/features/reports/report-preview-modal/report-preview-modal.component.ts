@@ -37,16 +37,32 @@ export class ReportPreviewModalComponent implements OnInit {
   protected readonly currentPage = signal(1);
   protected readonly pageSize = signal(10);
 
+  protected readonly sortColumn = signal<string | null>(null);
+  protected readonly sortDirection = signal<'asc' | 'desc'>('asc');
+
   protected readonly columns = computed<TableColumn[]>(() =>
-    (this.preview()?.headers ?? []).map((label, i) => ({ key: String(i), label }))
+    (this.preview()?.headers ?? []).map((label, i) => ({ key: String(i), label, sortable: true }))
   );
 
   protected readonly totalRows = computed(() => this.preview()?.rows.length ?? 0);
 
-  protected readonly pagedRows = computed<Record<string, unknown>[]>(() => {
+  /** Sorted once here, then sliced for pagination below — sorting always applies to the full
+   *  dataset, not just the currently visible page. */
+  protected readonly sortedRows = computed(() => {
     const rows = this.preview()?.rows ?? [];
+    const col = this.sortColumn();
+    if (col === null) return rows;
+
+    const index = Number(col);
+    const direction = this.sortDirection() === 'asc' ? 1 : -1;
+    return [...rows].sort((a, b) =>
+      (a[index] ?? '').localeCompare(b[index] ?? '', undefined, { numeric: true, sensitivity: 'base' }) * direction
+    );
+  });
+
+  protected readonly pagedRows = computed<Record<string, unknown>[]>(() => {
     const start = (this.currentPage() - 1) * this.pageSize();
-    return rows.slice(start, start + this.pageSize()).map(row => {
+    return this.sortedRows().slice(start, start + this.pageSize()).map(row => {
       const record: Record<string, unknown> = {};
       row.forEach((cell, i) => (record[String(i)] = cell));
       return record;
@@ -90,6 +106,16 @@ export class ReportPreviewModalComponent implements OnInit {
 
   onPageChange(page: number): void {
     this.currentPage.set(page);
+  }
+
+  onSortChange(columnKey: string): void {
+    if (this.sortColumn() === columnKey) {
+      this.sortDirection.update(d => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      this.sortColumn.set(columnKey);
+      this.sortDirection.set('asc');
+    }
+    this.currentPage.set(1);
   }
 
   close(): void {

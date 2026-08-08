@@ -43,10 +43,27 @@
           <table class="table table-hover align-middle mb-0">
             <thead class="table-dark">
               <tr>
-                <th class="ps-4">Code</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Department</th>
+                <th
+                  class="ps-4"
+                  appSortableHeader="employeeCode"
+                  [sortBy]="store.sortBy()"
+                  [sortDirection]="store.sortDirection()"
+                  (sortChange)="onSortChange($event)">Code</th>
+                <th
+                  appSortableHeader="lastName"
+                  [sortBy]="store.sortBy()"
+                  [sortDirection]="store.sortDirection()"
+                  (sortChange)="onSortChange($event)">Name</th>
+                <th
+                  appSortableHeader="email"
+                  [sortBy]="store.sortBy()"
+                  [sortDirection]="store.sortDirection()"
+                  (sortChange)="onSortChange($event)">Email</th>
+                <th
+                  appSortableHeader="departmentName"
+                  [sortBy]="store.sortBy()"
+                  [sortDirection]="store.sortDirection()"
+                  (sortChange)="onSortChange($event)">Department</th>
                 <th>Job Title</th>
                 <th>Status</th>
                 @if (canManageEmployees) {

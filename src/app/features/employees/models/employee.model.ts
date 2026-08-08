@@ -76,3 +76,5 @@ export interface EmployeeListFilter {
   sortBy?: 'firstName' | 'lastName' | 'email' | 'hireDate' | 'salary' | 'departmentName' | 'employeeCode';
   sortDirection?: 'asc' | 'desc';
 }
+
+export type EmployeeSortField = NonNullable<EmployeeListFilter['sortBy']>;

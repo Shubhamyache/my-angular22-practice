@@ -33,4 +33,8 @@ export interface PayrollListFilter {
   status?: PayrollStatus;
   periodStart?: string;
   periodEnd?: string;
+  sortBy?: 'employeeName' | 'departmentName' | 'periodStart' | 'grossSalary' | 'deductions' | 'netSalary' | 'status';
+  sortDirection?: 'asc' | 'desc';
 }
+
+export type PayrollSortField = NonNullable<PayrollListFilter['sortBy']>;

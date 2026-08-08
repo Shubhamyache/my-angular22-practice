@@ -3,7 +3,15 @@
     <thead class="table-dark">
       <tr>
         @for (col of columns(); track col.key) {
-          <th>{{ col.label }}</th>
+          @if (col.sortable) {
+            <th
+              [appSortableHeader]="col.key"
+              [sortBy]="sortBy()"
+              [sortDirection]="sortDirection()"
+              (sortChange)="sortChange.emit($event)">{{ col.label }}</th>
+          } @else {
+            <th>{{ col.label }}</th>
+          }
         }
       </tr>
     </thead>

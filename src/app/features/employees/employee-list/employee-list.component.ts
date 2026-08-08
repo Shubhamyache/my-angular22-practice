@@ -2,8 +2,9 @@ import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/cor
 import { RouterModule } from '@angular/router';
 import { EmployeeStore } from '../store/employee.store';
 import { EmployeeService } from '../services/employee.service';
-import { Employee } from '../models/employee.model';
+import { Employee, EmployeeSortField } from '../models/employee.model';
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
+import { SortableHeaderComponent } from '../../../shared/components/sortable-header/sortable-header.component';
 import { AuthService } from '../../../core/services/auth.service';
 import { ACCOUNT_STATUS_BADGE, getAccountStatus } from '../utils/account-status.util';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
@@ -12,7 +13,7 @@ import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/
   selector: 'app-employee-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterModule, LoaderComponent],
+  imports: [RouterModule, LoaderComponent, SortableHeaderComponent],
   templateUrl: './employee-list.component.html'
 })
 export class EmployeeListComponent implements OnInit {
@@ -36,6 +37,13 @@ export class EmployeeListComponent implements OnInit {
 
   ngOnInit(): void {
     this.store.loadEmployees();
+  }
+
+  /** SortableHeaderComponent works with a generic `string` sort key since it's shared across
+   *  features; each list component narrows it back to its own field union before handing it to
+   *  the store. */
+  onSortChange(field: string): void {
+    this.store.setSorting(field as EmployeeSortField);
   }
 
   /**

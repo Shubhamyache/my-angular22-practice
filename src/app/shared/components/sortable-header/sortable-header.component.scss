@@ -1,0 +1,35 @@
+:host {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.6);
+    outline-offset: -2px;
+  }
+}
+
+:host(.sortable-header--active) {
+  background-color: rgba(255, 255, 255, 0.12);
+  font-weight: 700;
+}
+
+.sortable-header-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.sortable-header-icon {
+  font-size: 0.75rem;
+  opacity: 0.55;
+}
+
+:host(.sortable-header--active) .sortable-header-icon {
+  opacity: 1;
+  color: #ffc107;
+}

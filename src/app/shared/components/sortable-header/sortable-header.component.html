@@ -1,0 +1,8 @@
+<span class="sortable-header-content">
+  <ng-content></ng-content>
+  <i
+    class="bi sortable-header-icon"
+    [class.bi-sort-up]="active() && sortDirection() === 'asc'"
+    [class.bi-sort-down]="active() && sortDirection() === 'desc'"
+    [class.bi-arrow-down-up]="!active()"></i>
+</span>

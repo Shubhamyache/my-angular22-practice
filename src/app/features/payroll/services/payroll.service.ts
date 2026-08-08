@@ -31,8 +31,8 @@ export class PayrollService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/payroll`;
 
-  getAll(): Observable<Payroll[]> {
-    return this.getPaged({ page: 1, pageSize: 100 }).pipe(map(res => res.data));
+  getAll(sort?: Pick<PayrollListFilter, 'sortBy' | 'sortDirection'>): Observable<Payroll[]> {
+    return this.getPaged({ page: 1, pageSize: 100, ...sort }).pipe(map(res => res.data));
   }
 
   getPaged(filter: PayrollListFilter): Observable<PagedResponse<Payroll>> {

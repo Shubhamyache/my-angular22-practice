@@ -1,14 +1,15 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { PayrollService } from '../services/payroll.service';
-import { Payroll } from '../models/payroll.model';
+import { Payroll, PayrollSortField } from '../models/payroll.model';
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
+import { SortableHeaderComponent } from '../../../shared/components/sortable-header/sortable-header.component';
 import { CurrencyFormatPipe } from '../../../shared/pipes/currency-format.pipe';
 import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 
 @Component({
   selector: 'app-payroll-list',
   standalone: true,
-  imports: [LoaderComponent, CurrencyFormatPipe, DateFormatPipe],
+  imports: [LoaderComponent, SortableHeaderComponent, CurrencyFormatPipe, DateFormatPipe],
   templateUrl: './payroll-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -18,6 +19,10 @@ export class PayrollListComponent implements OnInit {
   protected readonly payrolls = signal<Payroll[]>([]);
   protected readonly loading  = signal(true);
   protected readonly error    = signal<string | null>(null);
+
+  // Matches PayrollListFilter's own backend default ("desc" — most recent period first).
+  protected readonly sortBy = signal<PayrollSortField | null>(null);
+  protected readonly sortDirection = signal<'asc' | 'desc'>('desc');
 
   // "Run Payroll" button state — POST /payroll/generate now exists (UIIntegrationInfo.md §4)
   // but this screen has no date-range picker UI to choose a period, so — without adding any
@@ -32,7 +37,7 @@ export class PayrollListComponent implements OnInit {
 
   private loadPayrolls(): void {
     this.loading.set(true);
-    this.payrollService.getAll().subscribe({
+    this.payrollService.getAll({ sortBy: this.sortBy() ?? undefined, sortDirection: this.sortDirection() }).subscribe({
       next: data => {
         this.payrolls.set(data);
         this.loading.set(false);
@@ -77,5 +82,19 @@ export class PayrollListComponent implements OnInit {
         this.payrolls.update(list => list.map(p => (p.id === updated.id ? updated : p)));
       }
     });
+  }
+
+  /** Same toggle-or-reset convention as ProjectStore.setSorting / EmployeeStore.setSorting:
+   *  clicking the already-active column flips direction, a different column resets to ascending.
+   *  Server-side sorted, so this re-fetches. */
+  onSortChange(field: string): void {
+    const typedField = field as PayrollSortField;
+    if (this.sortBy() === typedField) {
+      this.sortDirection.update(d => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      this.sortBy.set(typedField);
+      this.sortDirection.set('asc');
+    }
+    this.loadPayrolls();
   }
 }
