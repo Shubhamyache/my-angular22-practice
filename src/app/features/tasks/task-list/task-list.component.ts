@@ -11,6 +11,7 @@ import { TaskStore } from '../store/task.store';
 import { TaskService } from '../services/task.service';
 import { TaskStatus, TaskPriority } from '../models/task.model';
 import { LoaderComponent } from '../../../shared/components/loader/loader.component';
+import { SortableHeaderComponent } from '../../../shared/components/sortable-header/sortable-header.component';
 import { DateFormatPipe } from '../../../shared/pipes/date-format.pipe';
 import { AuthService } from '../../../core/services/auth.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
@@ -23,6 +24,7 @@ import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/
     RouterModule,
     FormsModule,
     LoaderComponent,
+    SortableHeaderComponent,
     DateFormatPipe
   ],
   templateUrl: './task-list.component.html'
@@ -103,15 +105,10 @@ export class TaskListComponent implements OnInit {
     this.store.setPriorityFilter((value || 'All') as TaskPriority | 'All');
   }
 
-  onSort(field: 'title' | 'dueDate' | 'priority' | 'status'): void {
-    this.store.setSorting(field);
-  }
-
-  getSortIcon(field: string): string {
-    if (this.store.sortBy() !== field) {
-      return '↕️';
-    }
-    return this.store.sortDirection() === 'asc' ? '↑' : '↓';
+  /** SortableHeaderComponent works with a generic `string` sort key since it's shared across
+   *  features; narrow it back to TaskStore's own field union before handing it off. */
+  onSortChange(field: string): void {
+    this.store.setSorting(field as 'title' | 'dueDate' | 'priority' | 'status');
   }
 
   /**

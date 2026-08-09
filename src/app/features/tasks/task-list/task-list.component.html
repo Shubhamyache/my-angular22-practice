@@ -85,32 +85,15 @@
     </div>
   </div>
 
-  <!-- Sort & Clear Row -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <div class="d-flex align-items-center gap-2">
-      <span class="text-muted small fw-semibold">SORT BY:</span>
-      <div class="btn-group btn-group-sm">
-        <button class="btn btn-outline-secondary" (click)="onSort('title')">
-          Title {{ getSortIcon('title') }}
-        </button>
-        <button class="btn btn-outline-secondary" (click)="onSort('dueDate')">
-          Due Date {{ getSortIcon('dueDate') }}
-        </button>
-        <button class="btn btn-outline-secondary" (click)="onSort('priority')">
-          Priority {{ getSortIcon('priority') }}
-        </button>
-        <button class="btn btn-outline-secondary" (click)="onSort('status')">
-          Status {{ getSortIcon('status') }}
-        </button>
-      </div>
-    </div>
-
-    @if (searchTerm || store.statusFilter() || store.priorityFilter()) {
+  <!-- Clear Filters Row — sorting now happens by clicking the table's column headers directly
+       (see the sortable th's below), consistent with Employees/Payroll/Reports. -->
+  @if (searchTerm || store.statusFilter() || store.priorityFilter()) {
+    <div class="d-flex justify-content-end mb-3">
       <button class="btn btn-sm btn-outline-secondary" (click)="clearFilters()">
         <i class="bi bi-x-circle me-1"></i>Clear Filters
       </button>
-    }
-  </div>
+    </div>
+  }
 
   <!-- Stats Cards -->
   <div class="row g-3 mb-4">
@@ -179,12 +162,29 @@
           <table class="table table-hover align-middle mb-0">
             <thead class="table-dark">
               <tr>
-                <th class="ps-4">Task</th>
+                <th
+                  class="ps-4"
+                  appSortableHeader="title"
+                  [sortBy]="store.sortBy()"
+                  [sortDirection]="store.sortDirection()"
+                  (sortChange)="onSortChange($event)">Task</th>
                 <th>Project</th>
                 <th>Assignee</th>
-                <th>Priority</th>
-                <th>Status</th>
-                <th>Due Date</th>
+                <th
+                  appSortableHeader="priority"
+                  [sortBy]="store.sortBy()"
+                  [sortDirection]="store.sortDirection()"
+                  (sortChange)="onSortChange($event)">Priority</th>
+                <th
+                  appSortableHeader="status"
+                  [sortBy]="store.sortBy()"
+                  [sortDirection]="store.sortDirection()"
+                  (sortChange)="onSortChange($event)">Status</th>
+                <th
+                  appSortableHeader="dueDate"
+                  [sortBy]="store.sortBy()"
+                  [sortDirection]="store.sortDirection()"
+                  (sortChange)="onSortChange($event)">Due Date</th>
                 <th class="text-end">Hours</th>
                 <th class="text-center pe-4">Actions</th>
               </tr>
